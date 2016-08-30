@@ -18,6 +18,7 @@ MAX_RETRIES = 5
 if sys.version_info < (3,):
     _unicode_type = unicode
 
+
     def _str(value):
         if isinstance(value, unicode):
             return value.encode('utf-8')
@@ -64,7 +65,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         List all image sizes available for location
         """
-        path = '%sproviders/Microsoft.Compute/locations/%s/vmSizes' % (self._default_path_prefix, location)
+        path = '%sproviders/Microsoft.Compute/locations/%s/vmSizes' % (
+            self._default_path_prefix, location)
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_size(x) for x in raw_data['value']]
@@ -93,7 +95,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         Create Azure Virtual Machine using Resource Management model.
 
-        For now this only creates a Linux machine, always default to public IP address, and only support 1 data disk.
+        For now this only creates a Linux machine, always default to public IP address,
+        and only support 1 data disk.
 
         It also assumes you have created these things:
         - A resource group
@@ -135,7 +138,8 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_admin_username: `str`
 
         :keyword     ex_marketplace_image: Required.
-                     The image from market place to be used for setting up the OS disk. For example:
+                     The image from market place to be used for setting up the OS disk.
+                     For example:
                      ```
                      ubuntu_image = {
                          'sku': '14.04.5-LTS',
@@ -151,7 +155,8 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_os_disk_size: `int`
 
         :keyword     ex_data_disk_size: Optional.
-                     The size of the data disk to be attached in GB. Will not be created if passed nothing
+                     The size of the data disk to be attached in GB. Will not be created
+                     if passed nothing
         :type        ex_data_disk_size: `int`
 
         :keyword     ex_availability_set: Optional.
@@ -163,7 +168,8 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_public_key: `str`
         """
         # Create the public IP address
-        public_ip_address = self._create_public_ip_address(name, ex_resource_group_name, location.id)
+        public_ip_address = self._create_public_ip_address(name, ex_resource_group_name,
+                                                           location.id)
 
         # Create the network interface card with that public IP address
         nic = self._create_network_interface(name, ex_resource_group_name, location.id,
@@ -186,7 +192,8 @@ class AzureARMNodeDriver(NodeDriver):
                 'osDisk': {
                     'name': os_disk_name,
                     'vhd': {
-                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' % (ex_storage_account_name, os_disk_name)
+                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' % (
+                            ex_storage_account_name, os_disk_name)
                     },
                     'caching': 'ReadWrite',
                     'createOption': 'fromImage',
@@ -206,7 +213,7 @@ class AzureARMNodeDriver(NodeDriver):
                             }
                         ]
                     }
-               }
+                }
             },
             'networkProfile': {
                 'networkInterfaces': [
@@ -229,7 +236,8 @@ class AzureARMNodeDriver(NodeDriver):
                     'diskSizeGB': ex_data_disk_size,
                     'lun': 0,
                     'vhd': {
-                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' % (ex_storage_account_name, data_disk_name)
+                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' % (
+                            ex_storage_account_name, data_disk_name)
                     },
                     'caching': 'ReadWrite',
                     'createOption': 'empty'
@@ -237,8 +245,11 @@ class AzureARMNodeDriver(NodeDriver):
             ]
 
         if ex_availability_set:
-            availability_set_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/availabilitySets/%s' % \
-                               (self.subscription_id, ex_resource_group_name, ex_availability_set)
+            availability_set_id = \
+                '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/' \
+                'availabilitySets/%s' % \
+                (self.subscription_id, ex_resource_group_name,
+                 ex_availability_set)
             node_payload['properties']['availabilitySet'] = {
                 'id': availability_set_id
             }
@@ -272,13 +283,18 @@ class AzureARMNodeDriver(NodeDriver):
                     'name': '%s-ip' % node_name,
                     'properties': {
                         'subnet': {
-                            'id': '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' %
-                                  (self.subscription_id, resource_group_name, virtual_network_name, subnet_name)
+                            'id': '/subscriptions/%s/'
+                                  'resourceGroups/%s/providers/Microsoft.Network/'
+                                  'virtualNetworks/%s/subnets/%s' %
+                                  (self.subscription_id, resource_group_name,
+                                   virtual_network_name, subnet_name)
                         },
                         'privateIPAllocationMethod': 'Dynamic',
                         'publicIPAddress': {
-                            'id': '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/publicIPAddresses/%s' %
-                                  (self.subscription_id, resource_group_name, public_ip_address_name)
+                            'id': '/subscriptions/%s/resourceGroups/%s/'
+                                  'providers/Microsoft.Network/publicIPAddresses/%s' %
+                                  (self.subscription_id, resource_group_name,
+                                   public_ip_address_name)
                         }
                     }
                 }]
@@ -312,7 +328,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         Take the azure raw data and turn into a Node class
         """
-        network_interfaces = node_data.get('properties', {}).get('networkProfile', {}).get('networkInterfaces', [])
+        network_interfaces = node_data.get('properties', {}).get('networkProfile', {}).get(
+            'networkInterfaces', [])
         network_interface_urls = ['%s' % x.get('id') for x in network_interfaces if x.get('id')]
         public_ips = []
         private_ips = []
@@ -322,7 +339,8 @@ class AzureARMNodeDriver(NodeDriver):
             private_ips.extend(_private_ips)
 
         provisioning_state = node_data.get('properties', {}).get('provisioningState')
-        node_state = NodeState.RUNNING if provisioning_state == 'Succeeded' else NodeState.PENDING
+        node_state = NodeState.RUNNING if provisioning_state == 'Succeeded' \
+            else NodeState.PENDING
 
         return Node(
             id=node_data.get('name'),
@@ -349,7 +367,8 @@ class AzureARMNodeDriver(NodeDriver):
         private_ips = []
         for ip_configuration in ip_configurations:
             private_ips.append(ip_configuration['properties']['privateIPAddress'])
-            public_ips.append(self._get_public_ip(ip_configuration['properties']['publicIPAddress']['id']))
+            public_ips.append(
+                self._get_public_ip(ip_configuration['properties']['publicIPAddress']['id']))
         return public_ips, private_ips
 
     def _get_public_ip(self, public_ip_url):
@@ -485,7 +504,8 @@ class AzureARMNodeDriver(NodeDriver):
     def _perform_request(self, request, retries=0):
         if retries > MAX_RETRIES:
             # We have retried more than enough, let's quit
-            raise Exception('Maximum retries (%d) reached. Please try again later' % MAX_RETRIES)
+            raise Exception(
+                'Maximum retries (%d) reached. Please try again later' % MAX_RETRIES)
         try:
             return self.connection.request(
                 action=request.path,
@@ -502,7 +522,7 @@ class AzureARMNodeDriver(NodeDriver):
             if e.retry_after is not None:
                 time.sleep(e.retry_after)
                 # Redo the request but with retries value incremented
-                return self._perform_request(request, retries=retries+1)
+                return self._perform_request(request, retries=retries + 1)
             else:
                 raise e
         except Exception as e:
