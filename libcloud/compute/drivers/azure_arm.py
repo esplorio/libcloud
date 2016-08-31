@@ -3,7 +3,8 @@ import sys
 
 import time
 
-from libcloud.common.azure import AzureResourceManagerConnection, AzureRedirectException
+from libcloud.common.azure import AzureResourceManagerConnection, \
+    AzureRedirectException
 from libcloud.common.exceptions import RateLimitReachedError
 from libcloud.compute.base import NodeDriver, NodeLocation, NodeSize, Node
 from libcloud.compute.drivers.azure import AzureHTTPRequest
@@ -17,6 +18,7 @@ DEFAULT_API_VERSION = '2016-07-01'
 MAX_RETRIES = 5
 if sys.version_info < (3,):
     _unicode_type = unicode
+
 
     def _str(value):
         if isinstance(value, unicode):
@@ -74,7 +76,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         List all image sizes available for location
         """
-        path = '%sproviders/Microsoft.Compute/locations/%s/vmSizes' % (self._default_path_prefix, location)
+        path = '%sproviders/Microsoft.Compute/locations/%s/vmSizes' % (
+            self._default_path_prefix, location)
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_size(x) for x in raw_data['value']]
@@ -83,7 +86,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         List all nodes in a resource group
         """
-        path = '%sresourceGroups/%s/providers/Microsoft.Compute/virtualmachines' % \
+        path = '%sresourceGroups/%s/providers' \
+               '/Microsoft.Compute/virtualmachines' % \
                (self._default_path_prefix, resource_group)
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
@@ -103,7 +107,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         Create Azure Virtual Machine using Resource Management model.
 
-        For now this only creates a Linux machine, always default to public IP address, and only support 1 data disk.
+        For now this only creates a Linux machine, always default to public IP
+        address, and only support 1 data disk.
 
         It also assumes you have created these things:
         - A resource group
@@ -132,11 +137,13 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_storage_account_name: `str`
 
         :keyword     ex_virtual_network_name: Required.
-                     The name of the virtual network the node would be connected to
+                     The name of the virtual network the node would be
+                     connected to
         :type        ex_virtual_network_name: `str`
 
         :keyword     ex_subnet_name: Required.
-                     The name of the subnet inside `ex_virtual_network_name` the node would
+                     The name of the subnet inside `ex_virtual_network_name`
+                     the node would
                      be connected to
         :type        ex_subnet_name: `str`
 
@@ -145,7 +152,9 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_admin_username: `str`
 
         :keyword     ex_marketplace_image: Required.
-                     The image from market place to be used for setting up the OS disk. For example:
+                     The image from market place to be used for setting up the
+                     OS disk.
+                     For example:
                      ```
                      ubuntu_image = {
                          'sku': '14.04.5-LTS',
@@ -157,11 +166,14 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_marketplace_image: `dict`
 
         :keyword     ex_os_disk_size: Optional.
-                     The size of the OS disk to be attached in GB. Defaults to 30
+                     The size of the OS disk to be attached in GB. Defaults to
+                     30
         :type        ex_os_disk_size: `int`
 
         :keyword     ex_data_disk_size: Optional.
-                     The size of the data disk to be attached in GB. Will not be created if passed nothing
+                     The size of the data disk to be attached in GB. Will not
+                     be created
+                     if passed nothing
         :type        ex_data_disk_size: `int`
 
         :keyword     ex_availability_set: Optional.
@@ -169,15 +181,19 @@ class AzureARMNodeDriver(NodeDriver):
         :type        ex_availability_set: `int`
 
         :keyword     ex_public_key: Optional.
-                     The content of the SSH public key to be deployed on the box
+                     The content of the SSH public key to be deployed on the
+                     box
         :type        ex_public_key: `str`
         """
         # Create the public IP address
-        public_ip_address = self._create_public_ip_address(name, ex_resource_group_name, location.id)
+        public_ip_address = self._create_public_ip_address(
+            name, ex_resource_group_name, location.id)
 
         # Create the network interface card with that public IP address
-        nic = self._create_network_interface(name, ex_resource_group_name, location.id,
-                                             ex_virtual_network_name, ex_subnet_name,
+        nic = self._create_network_interface(name, ex_resource_group_name,
+                                             location.id,
+                                             ex_virtual_network_name,
+                                             ex_subnet_name,
                                              public_ip_address['name'])
         # Create the machine
         node_payload = {
@@ -196,7 +212,8 @@ class AzureARMNodeDriver(NodeDriver):
                 'osDisk': {
                     'name': os_disk_name,
                     'vhd': {
-                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' % (ex_storage_account_name, os_disk_name)
+                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
+                               (ex_storage_account_name, os_disk_name)
                     },
                     'caching': 'ReadWrite',
                     'createOption': 'fromImage',
@@ -211,12 +228,13 @@ class AzureARMNodeDriver(NodeDriver):
                     'ssh': {
                         'publicKeys': [
                             {
-                                'path': '/home/%s/.ssh/authorized_keys' % ex_admin_username,
+                                'path': '/home/%s/.ssh/authorized_keys' %
+                                        ex_admin_username,
                                 'keyData': ex_public_key
                             }
                         ]
                     }
-               }
+                }
             },
             'networkProfile': {
                 'networkInterfaces': [
@@ -239,7 +257,8 @@ class AzureARMNodeDriver(NodeDriver):
                     'diskSizeGB': ex_data_disk_size,
                     'lun': 0,
                     'vhd': {
-                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' % (ex_storage_account_name, data_disk_name)
+                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
+                               (ex_storage_account_name, data_disk_name)
                     },
                     'caching': 'ReadWrite',
                     'createOption': 'empty'
@@ -247,16 +266,21 @@ class AzureARMNodeDriver(NodeDriver):
             ]
 
         if ex_availability_set:
-            availability_set_id = '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/availabilitySets/%s' % \
-                               (self.subscription_id, ex_resource_group_name, ex_availability_set)
+            availability_set_id = \
+                '/subscriptions/%s/resourceGroups/%s/providers/' \
+                'Microsoft.Compute/availabilitySets/%s' % \
+                (self.subscription_id, ex_resource_group_name,
+                 ex_availability_set)
             node_payload['properties']['availabilitySet'] = {
                 'id': availability_set_id
             }
 
-        path = '%sresourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s' % \
+        path = '%sresourceGroups/%s/providers/' \
+               'Microsoft.Compute/virtualMachines/%s' % \
                (self._default_path_prefix, ex_resource_group_name, name)
 
-        output = self._perform_put(path, node_payload, api_version='2016-03-30')
+        output = self._perform_put(path, node_payload,
+                                   api_version='2016-03-30')
         output = output.parse_body()
 
         if 'error' in output:
@@ -271,7 +295,8 @@ class AzureARMNodeDriver(NodeDriver):
             driver=self.connection.driver,
         )
 
-    def _create_network_interface(self, node_name, resource_group_name, location,
+    def _create_network_interface(self, node_name, resource_group_name,
+                                  location,
                                   virtual_network_name, subnet_name,
                                   public_ip_address_name):
         nic_name = '%s-nic' % node_name
@@ -282,24 +307,33 @@ class AzureARMNodeDriver(NodeDriver):
                     'name': '%s-ip' % node_name,
                     'properties': {
                         'subnet': {
-                            'id': '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s' %
-                                  (self.subscription_id, resource_group_name, virtual_network_name, subnet_name)
+                            'id': '/subscriptions/%s/'
+                                  'resourceGroups/%s/providers/'
+                                  'Microsoft.Network/virtualNetworks/%s/'
+                                  'subnets/%s' %
+                                  (self.subscription_id, resource_group_name,
+                                   virtual_network_name, subnet_name)
                         },
                         'privateIPAllocationMethod': 'Dynamic',
                         'publicIPAddress': {
-                            'id': '/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/publicIPAddresses/%s' %
-                                  (self.subscription_id, resource_group_name, public_ip_address_name)
+                            'id': '/subscriptions/%s/resourceGroups/%s/'
+                                  'providers/Microsoft.Network/'
+                                  'publicIPAddresses/%s' %
+                                  (self.subscription_id, resource_group_name,
+                                   public_ip_address_name)
                         }
                     }
                 }]
             }
         }
-        path = '%sresourceGroups/%s/providers/Microsoft.Network/networkInterfaces/%s' % \
+        path = '%sresourceGroups/%s/providers/Microsoft.Network/' \
+               'networkInterfaces/%s' % \
                (self._default_path_prefix, resource_group_name, nic_name)
         output = self._perform_put(path, payload)
         return output.parse_body()
 
-    def _create_public_ip_address(self, node_name, resource_group_name, location):
+    def _create_public_ip_address(self, node_name, resource_group_name,
+                                  location):
         public_ip_address_name = '%s-public-ip' % node_name
         payload = {
             'location': location,
@@ -312,8 +346,10 @@ class AzureARMNodeDriver(NodeDriver):
                 }
             }
         }
-        path = '%sresourceGroups/%s/providers/Microsoft.Network/publicIPAddresses/%s' % \
-               (self._default_path_prefix, resource_group_name, public_ip_address_name)
+        path = '%sresourceGroups/%s/providers/Microsoft.Network/' \
+               'publicIPAddresses/%s' % \
+               (self._default_path_prefix, resource_group_name,
+                public_ip_address_name)
 
         output = self._perform_put(path, payload)
         return output.parse_body()
@@ -322,17 +358,23 @@ class AzureARMNodeDriver(NodeDriver):
         """
         Take the azure raw data and turn into a Node class
         """
-        network_interfaces = node_data.get('properties', {}).get('networkProfile', {}).get('networkInterfaces', [])
-        network_interface_urls = ['%s' % x.get('id') for x in network_interfaces if x.get('id')]
+        network_interfaces = node_data.get('properties', {}).get(
+            'networkProfile', {}).get(
+            'networkInterfaces', [])
+        network_interface_urls = ['%s' % x.get('id') for x in
+                                  network_interfaces if x.get('id')]
         public_ips = []
         private_ips = []
         for network_interface_url in network_interface_urls:
-            _public_ips, _private_ips = self._get_public_and_private_ips(network_interface_url)
+            _public_ips, _private_ips = self._get_public_and_private_ips(
+                network_interface_url)
             public_ips.extend(_public_ips)
             private_ips.extend(_private_ips)
 
-        provisioning_state = node_data.get('properties', {}).get('provisioningState')
-        node_state = NodeState.RUNNING if provisioning_state == 'Succeeded' else NodeState.PENDING
+        provisioning_state = node_data.get('properties', {}).get(
+            'provisioningState')
+        node_state = NodeState.RUNNING if provisioning_state == 'Succeeded' \
+            else NodeState.PENDING
 
         return Node(
             id=node_data.get('name'),
@@ -342,29 +384,36 @@ class AzureARMNodeDriver(NodeDriver):
             private_ips=private_ips,
             driver=self.connection.driver,
             extra={
-                'provisioningState': node_data.get('properties', {}).get('provisioningState')
+                'provisioningState': node_data.get('properties', {}).get(
+                    'provisioningState')
             }
         )
 
     def _get_public_and_private_ips(self, network_interace_url):
         """
-        Get public and and private ips of the virtual machine by following the urls provided.
+        Get public and and private ips of the virtual machine by following the
+         urls provided.
         :param network_interace_url:
         :return:
         """
         json_response = self._perform_get(network_interace_url)
         raw_data = json_response.parse_body()
-        ip_configurations = raw_data.get('properties', {}).get('ipConfigurations', [])
+        ip_configurations = raw_data.get('properties', {}).get(
+            'ipConfigurations', [])
         public_ips = []
         private_ips = []
         for ip_configuration in ip_configurations:
-            private_ips.append(ip_configuration['properties']['privateIPAddress'])
-            public_ips.append(self._get_public_ip(ip_configuration['properties']['publicIPAddress']['id']))
+            private_ips.append(
+                ip_configuration['properties']['privateIPAddress'])
+            public_ips.append(
+                self._get_public_ip(
+                    ip_configuration['properties']['publicIPAddress']['id']))
         return public_ips, private_ips
 
     def _get_public_ip(self, public_ip_url):
         """
-        Using the public ip url we can query the azure api and get the public ip adrewss
+        Using the public ip url we can query the azure api and get the public
+        ip adrewss
         """
         json_response = self._perform_get(public_ip_url)
         raw_data = json_response.parse_body()
@@ -372,8 +421,9 @@ class AzureARMNodeDriver(NodeDriver):
 
     def _to_location(self, location_data):
         """
-        Convert the data from a Azure response object into a location. Commented out
-        code is from the classic Azure driver, not sure if we need those fields.
+        Convert the data from a Azure response object into a location.
+        Commented out code is from the classic Azure driver, not sure if we
+        need those fields.
         """
         return NodeLocation(
             id=location_data.get('name'),
@@ -420,7 +470,8 @@ class AzureARMNodeDriver(NodeDriver):
         request.host = AZURE_RESOURCE_MANAGEMENT_HOST
         request.path = path
         request.body = ensure_string(self._get_request_body(body))
-        request.path, request.query = self._update_request_uri_query(request, api_version)
+        request.path, request.query = self._update_request_uri_query(
+            request, api_version)
         return self._perform_request(request)
 
     def _get_request_body(self, request_body):
@@ -447,7 +498,8 @@ class AzureARMNodeDriver(NodeDriver):
         request.method = 'GET'
         request.host = AZURE_RESOURCE_MANAGEMENT_HOST
         request.path = path
-        request.path, request.query = self._update_request_uri_query(request, api_version)
+        request.path, request.query = self._update_request_uri_query(
+            request, api_version)
         return self._perform_request(request)
 
     def _update_request_uri_query(self, request, api_version=None):
@@ -495,7 +547,9 @@ class AzureARMNodeDriver(NodeDriver):
     def _perform_request(self, request, retries=0):
         if retries > MAX_RETRIES:
             # We have retried more than enough, let's quit
-            raise Exception('Maximum retries (%d) reached. Please try again later' % MAX_RETRIES)
+            raise Exception(
+                'Maximum retries (%d) reached. Please try again later' %
+                MAX_RETRIES)
         try:
             return self.connection.request(
                 action=request.path,
@@ -512,7 +566,7 @@ class AzureARMNodeDriver(NodeDriver):
             if e.retry_after is not None:
                 time.sleep(e.retry_after)
                 # Redo the request but with retries value incremented
-                return self._perform_request(request, retries=retries+1)
+                return self._perform_request(request, retries=retries + 1)
             else:
                 raise e
         except Exception as e:
