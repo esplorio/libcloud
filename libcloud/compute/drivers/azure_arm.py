@@ -37,7 +37,7 @@ class AzureARMNodeDriver(NodeDriver):
     def __init__(self, subscription_id=None, token=None, **kwargs):
         """
         subscription_id contains the Azure subscription id in the form of GUID
-        key_file contains the Azure X509 certificate in .pem form
+        token is an OAuth 2 token to authenticate with ARM
         """
         self.subscription_id = subscription_id
         self.token = token
