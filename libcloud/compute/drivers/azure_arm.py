@@ -39,7 +39,17 @@ class AzureARMNodeDriver(NodeDriver):
     def __init__(self, subscription_id=None, token=None, **kwargs):
         """
         subscription_id contains the Azure subscription id in the form of GUID
-        key_file contains the Azure X509 certificate in .pem form
+        token is an OAuth 2 token to authenticate with ARM
+
+        Steps to produce a token (won't work straight away on Macs): https://blogs.msdn.microsoft.com/arsen/2015/09/18/certificate-based-auth-with-azure-service-principals-from-linux-command-line/
+        Now to make the above to work with Macs, you'd need to make these changes:
+            - The call to generate base64 fingerprint should be:
+            `echo $(openssl x509 -in esplorio-azure-ad-cert.pem -fingerprint -noout) | sed 's/SHA1 Fingerprint=//g' | sed 's/://g' | xxd -r -ps | base64`
+            - Instead of `head`, use `ghead` from `brew install coreutils`, and then do: `tail -n+2 esplorio-azure-ad-cert.pem | ghead -n-1`
+            - To create the AD app:
+            `azure ad app create --name "esplorio-cli-tools" --home-page "http://esplorio-cli-tools/" --identifier-uris "http://esplorio-cli-tools/"  --key-usage "Verify" --end-date "2020-01-01" --key-value "$(tail -n+2 esplorio-azure-ad-cert.pem | ghead -n-1)"`
+            - Use `-a` option in `azure ad sp create -a <Copy and Paste Application Id GUID Here>`
+            - Command to fetch the Tenant ID: `azure account show`
         """
         self.subscription_id = subscription_id
         self.token = token
