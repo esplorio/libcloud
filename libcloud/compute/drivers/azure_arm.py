@@ -82,13 +82,19 @@ class AzureARMNodeDriver(NodeDriver):
         raw_data = json_response.parse_body()
         return [self._to_size(x) for x in raw_data['value']]
 
-    def list_nodes(self, resource_group):
+    def list_nodes(self, resource_group=None):
         """
         List all nodes in a resource group
         """
-        path = '%sresourceGroups/%s/providers' \
+        if resource_group:
+            path = '%sresourceGroups/%s/providers' \
                '/Microsoft.Compute/virtualmachines' % \
                (self._default_path_prefix, resource_group)
+        else:
+            path = '%ssubscriptions/%s/providers/Microsoft.Compute' \
+                   '/virtualMachines' \
+                   % (self._default_path_prefix, self.subscription_id)
+
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_node(x) for x in raw_data['value']]
