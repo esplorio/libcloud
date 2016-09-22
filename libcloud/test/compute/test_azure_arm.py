@@ -45,6 +45,8 @@ class AzureNodeDriverTests(LibcloudTestCase):
         self.assertEqual("myvm", vmimage.id)
         self.assertEqual("myvm", vmimage.id)
         self.assertEqual(NodeState.RUNNING, vmimage.state)
+        self.assertEqual(["1.1.1.1"], vmimage.public_ips)
+        self.assertEqual(["10.1.1.1"], vmimage.private_ips)
 
 
     def test_list_nodes_returned_no_deployments(self):
