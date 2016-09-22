@@ -1,0 +1,38 @@
+{
+  "name": "user-brazi-40wudhabjn7g-nic",
+  "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic",
+  "location": "brazilsouth",
+  "properties": {
+    "provisioningState": "Succeeded",
+    "resourceGuid": "2349067g-c235-4eg8-83b5-sdfehe23df90",
+    "ipConfigurations": [
+      {
+        "name": "ipconfig1472384756473",
+        "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic/ipConfigurations/ipconfig1472384756473",
+        "properties": {
+          "provisioningState": "Succeeded",
+          "privateIPAddress": "10.1.1.1",
+          "privateIPAllocationMethod": "Dynamic",
+          "publicIPAddress": {
+            "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/publicIPAddresses/user-brazi-40wudhabjn7g-pip"
+          },
+          "subnet": {
+            "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/virtualNetworks/user-brazi-40wudhabjn7g-vnet/subnets/user-brazi-40wudhabjn7g-snet"
+          },
+          "primary": true,
+          "privateIPAddressVersion": "IPv4"
+        }
+      }
+    ],
+    "dnsSettings": {
+      "dnsServers": [],
+      "appliedDnsServers": []
+    },
+    "enableIPForwarding": false,
+    "primary": true,
+    "virtualMachine": {
+      "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Compute/virtualMachines/myvm"
+    }
+  },
+  "type": "Microsoft.Network/networkInterfaces"
+}

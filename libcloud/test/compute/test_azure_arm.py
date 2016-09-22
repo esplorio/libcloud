@@ -4,7 +4,7 @@ import os
 import libcloud.resolve
 
 from libcloud.compute.providers import get_driver
-from libcloud.compute.types import Provider
+from libcloud.compute.types import Provider, NodeState
 from libcloud.test import LibcloudTestCase, MockHttp
 from libcloud.test.file_fixtures import ComputeFileFixtures
 
@@ -39,7 +39,13 @@ class AzureNodeDriverTests(LibcloudTestCase):
         self.assertListEqual(location_names_result, location_names_expected)
 
     def test_list_nodes_with_ressouce_group_returned_successfully(self):
-        raise NotImplementedError
+        vmimages = self.driver.list_nodes('myapp')
+        self.assertEqual(len(vmimages), 1)
+        vmimage = vmimages[0]
+        self.assertEqual("myvm", vmimage.id)
+        self.assertEqual("myvm", vmimage.id)
+        self.assertEqual(NodeState.RUNNING, vmimage.state)
+
 
     def test_list_nodes_returned_no_deployments(self):
         raise NotImplementedError
@@ -89,3 +95,21 @@ class AzureArmMockHttp(MockHttp):
 
         return httplib.NOT_FOUND, body, headers, httplib.responses[
             httplib.NOT_FOUND]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Network_networkInterfaces_user_brazi_40wudhabjn7g_nic(self, method, url, body, headers):
+        """ A request for the network interface card information about vm1"""
+        if method == "GET":
+            body = self.fixtures.load(
+                '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Network_networkInterfaces_user_brazi_40wudhabjn7g_nic.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Network_publicIPAddresses_user_brazi_40wudhabjn7g_pip(self, method, url, body, headers):
+        """ A request for the public ip information included in the nic above"""
+        if method == "GET":
+            body = self.fixtures.load(
+                '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Network_publicIPAddresses_user_brazi_40wudhabjn7g_pip.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]

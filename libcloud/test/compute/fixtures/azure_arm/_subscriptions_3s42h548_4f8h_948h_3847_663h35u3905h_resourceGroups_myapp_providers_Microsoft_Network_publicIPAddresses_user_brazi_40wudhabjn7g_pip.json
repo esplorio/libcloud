@@ -1,0 +1,21 @@
+{
+  "name": "user-brazi-40wudhabjn7g-pip",
+  "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/publicIPAddresses/user-brazi-40wudhabjn7g-pip",
+  "type": "Microsoft.Network/publicIPAddresses",
+  "location": "brazilsouth",
+  "properties": {
+    "provisioningState": "Succeeded",
+    "ipAddress": "1.1.1.1",
+    "resourceGuid": "2349067g-c235-4eg8-83b5-sdfehe23df90",
+    "publicIPAddressVersion": "IPv4",
+    "publicIPAllocationMethod": "Dynamic",
+    "idleTimeoutInMinutes": 4,
+    "dnsSettings": {
+      "domainNameLabel": "user-brazi-40wudhabjn7g-pip",
+      "fqdn": "user-brazi-40wudhabjn7g-pip.brazilsouth.cloudapp.azure.com"
+    },
+    "ipConfiguration": {
+      "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/denvarapptest/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic/ipConfigurations/ipconfig1472384756473"
+    }
+  }
+}
