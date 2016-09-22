@@ -1,0 +1,57 @@
+{
+    "value": [
+        {
+            "properties": {
+                "vmId": "g4bb0538-gg35-9119-f34r-9v392b43184b",
+                "hardwareProfile": {
+                    "vmSize": "Standard_D1_v2"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "canonical",
+                        "offer": "ubuntuserver",
+                        "sku": "16.10-DAILY",
+                        "version": "16.10.201609180"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "cli123fa4asf1a23bef-os-1243501352184",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "https://ssfwwefwg7.blob.core.windows.net/vhds/cli123fa4asf1a23bef-os-1243501352184.vhd"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "uservm",
+                    "adminUsername": "User",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "/subscriptions/3s42h548_4f8h_948h_3847_663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "https://ssfwwefwg7wv.blob.core.windows.net/"
+                    }
+                },
+                "provisioningState": "Succeeded"
+            },
+            "id": "/subscriptions/3s42h548_4f8h_948h_3847_663h35u3905h/resourceGroups/myapp/providers/Microsoft.Compute/virtualMachines/myvm",
+            "name": "myvm",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "brazilsouth",
+            "tags": {}
+        }
+    ]
+}

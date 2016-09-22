@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "ResourceGroupNotFound",
+    "message": "Resource group 'fakegroup' could not be found."
+  }
+}
