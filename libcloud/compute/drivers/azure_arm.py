@@ -61,7 +61,7 @@ class AzureARMNodeDriver(NodeDriver):
             **kwargs
         )
 
-    def list_locations(self, resource_group):
+    def list_locations(self):
         """
         Lists all locations
 

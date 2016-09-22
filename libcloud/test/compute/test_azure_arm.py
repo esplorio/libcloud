@@ -38,39 +38,7 @@ class AzureNodeDriverTests(LibcloudTestCase):
 
         self.assertListEqual(location_names_result, location_names_expected)
 
-        matched_location = next(
-            location for location in locations
-            if location.name == 'Southeast Asia'
-        )
-        services_result = matched_location.available_services
-        services_expected = [
-            'Compute',
-            'Storage',
-            'PersistentVMRole',
-            'HighMemory'
-        ]
-        self.assertListEqual(services_result, services_expected)
-
-        vm_role_sizes_result = matched_location.virtual_machine_role_sizes
-
-        vm_role_sizes_expected = [
-            'A5',
-            'A6',
-            'A7',
-            'Basic_A0',
-            'Basic_A1',
-            'Basic_A2',
-            'Basic_A3',
-            'Basic_A4',
-            'ExtraLarge',
-            'ExtraSmall',
-            'Large',
-            'Medium',
-            'Small'
-        ]
-        self.assertListEqual(vm_role_sizes_result, vm_role_sizes_expected)
-
-    def test_list_nodes_returned_successfully(self):
+    def test_list_nodes_with_ressouce_group_returned_successfully(self):
         raise NotImplementedError
 
     def test_list_nodes_returned_no_deployments(self):
