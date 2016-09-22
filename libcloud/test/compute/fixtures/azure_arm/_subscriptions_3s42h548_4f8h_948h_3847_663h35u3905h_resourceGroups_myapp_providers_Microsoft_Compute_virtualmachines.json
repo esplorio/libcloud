@@ -35,7 +35,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "/subscriptions/3s42h548_4f8h_948h_3847_663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic"
+                            "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic"
                         }
                     ]
                 },
@@ -47,7 +47,7 @@
                 },
                 "provisioningState": "Succeeded"
             },
-            "id": "/subscriptions/3s42h548_4f8h_948h_3847_663h35u3905h/resourceGroups/myapp/providers/Microsoft.Compute/virtualMachines/myvm",
+            "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Compute/virtualMachines/myvm",
             "name": "myvm",
             "type": "Microsoft.Compute/virtualMachines",
             "location": "brazilsouth",
