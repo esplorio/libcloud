@@ -1,3 +1,4 @@
+import httplib
 import os
 
 import libcloud.resolve
@@ -5,6 +6,7 @@ import libcloud.resolve
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider
 from libcloud.test import LibcloudTestCase, MockHttp
+from libcloud.test.file_fixtures import ComputeFileFixtures
 
 
 class AzureNodeDriverTests(LibcloudTestCase):
@@ -85,4 +87,37 @@ class AzureNodeDriverTests(LibcloudTestCase):
 
 class AzureArmMockHttp(MockHttp):
 
-    fixtures = None
+    fixtures = ComputeFileFixtures('azure_arm')
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_locations(self, method, url, body, headers):
+        """ Requests the list of locations from microsoft azure"""
+        if method == "GET":
+            body = self.fixtures.load(
+                '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_locations.json')
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_virtualmachines(self, method, url, body, headers):
+        """ Request for the list of nodes of the subscriber """
+        if method == "GET":
+            body = self.fixtures.load(
+                '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_virtualmachines.json')
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Compute_virtualmachines(self, method, url, body, headers):
+        """ Requests list of nodes for the resource group """
+        if method == "GET":
+            body = self.fixtures.load(
+                '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Compute_virtualmachines.json')
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_fakegroup_providers_Microsoft_Compute_virtualmachines(self, method, url, body, headers):
+        """ Bad request for nodes in a resource group that not exist """
+        if method == "GET":
+            body = self.fixtures.load(
+                '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_fakegroup_providers_Microsoft_Compute_virtualmachines.json')
+
+        return httplib.NOT_FOUND, body, headers, httplib.responses[
+            httplib.NOT_FOUND]
