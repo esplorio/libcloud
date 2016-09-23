@@ -77,7 +77,7 @@ class AzureVirtualNetwork(object):
                 % (self.id, self.name, self.location))
 
 
-class AzureSubNet(object)
+class AzureSubNet(object):
 
     def __init__(self, id, name, location , driver):
         self.id = id
