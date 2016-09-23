@@ -31,7 +31,6 @@ else:
     _unicode_type = str
 
 class AzureImage(NodeImage):
-    """Represents a Marketplace node image that an Azure VM can boot from."""
 
     def __init__(self, publisher, offer, sku, version, location, driver):
         self.publisher = publisher
@@ -46,8 +45,9 @@ class AzureImage(NodeImage):
         super(AzureImage, self).__init__(urn, name, driver)
 
     def __repr__(self):
-        return (('<AzureImage: id=%s, name=%s, location=%s>')
+        return ('<AzureImage: id=%s, name=%s, location=%s>'
                 % (self.id, self.name, self.location))
+
 
 class AzureARMNodeDriver(NodeDriver):
     connectionCls = AzureResourceManagerConnection
