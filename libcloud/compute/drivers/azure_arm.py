@@ -39,6 +39,7 @@ class AzureImage(NodeImage):
         self.os = os
         self.version = version
         self.location = location
+        self.driver = driver
         urn = "%s:%s:%s:%s:%s" % (self.publisher, self.offer,
                                self.sku, self.os, self.version)
         name = "%s %s %s %s %s" % (self.publisher, self.offer,
@@ -57,6 +58,48 @@ class AzureImage(NodeImage):
             'version': self.version
         }
 
+
+class AzureVirtualNetwork(object):
+
+    def __init__(self, id, name, location, driver, snets=None):
+        self.id = id
+        self.name = name
+        self.location = location
+        self.driver = driver
+        if snets:
+            self.snets = snets
+        else:
+            self.snets = self.driver.list_subnets(self.id)
+
+
+    def __repr__(self):
+        return ('<AzureNetwork: id=%s, name=%s, location=%s>'
+                % (self.id, self.name, self.location))
+
+
+class AzureSubNet(object)
+
+    def __init__(self, id, name, location , driver):
+        self.id = id
+        self.name = name
+        self.driver = driver
+
+    def __repr__(self):
+        return ('<AzureNetwork: id=%s, name=%s'
+                % (self.id, self.name))
+
+
+class AzureNetworkConfig(object):
+
+    def __init__(self, virtual_network, subnet, public_ip_allocation, public_ip_address=None):
+        snet_names = [snet.name for snet in virtual_network.snets]
+        if subnet.name not in snet_names:
+            raise AssertionError("Invalid Subnet: Subnet is part of the Virtual Network given")
+
+        self.virtual_network = virtual_network
+        self.subnet = subnet
+        self.public_ip_alllocation = public_ip_allocation
+        self.public_ip_adress = public_ip_address
 
 class AzureARMNodeDriver(NodeDriver):
     connectionCls = AzureResourceManagerConnection
@@ -175,6 +218,16 @@ class AzureARMNodeDriver(NodeDriver):
         json_response = self._perform_get('%s/versions' % path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
+
+    def list_virtualnetworks(self):
+        json_response = self._perform_get('%sproviders/Microsoft.Netowork/virtualnetworks', api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [self._to_virtual_network(x) for x in raw_data['value']]
+
+    def list_subnets(self, path):
+        json_response = self._perform_get('%s/subnets' % path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [self._to_subnet(x) for x in raw_data['value']]
 
     def get_os_from_version(self, path):
         json_response = self._perform_get(path, api_version='2016-03-30')
@@ -554,6 +607,23 @@ class AzureARMNodeDriver(NodeDriver):
             price=-1,
             bandwidth=-1,
             extra=size_data
+        )
+
+    def _to_virtual_network(self, network_data):
+        snets = [self._to_subnet(x) for x in network_data['subnets']]
+        return AzureVirtualNetwork(
+            id=network_data.get('id'),
+            name=network_data.get('name'),
+            location=network_data.get('location'),
+            snets=snets,
+            driver=self.connection.driver
+        )
+
+    def _to_subnet(self, snet_data):
+        return AzureSubNet(
+            id=snet_data.get('id'),
+            name=snet_data.get('name'),
+            driver=self.connection.driver
         )
 
     @property
