@@ -49,6 +49,14 @@ class AzureImage(NodeImage):
         return ('<AzureImage: id=%s, name=%s, location=%s>'
                 % (self.id, self.name, self.location))
 
+    def _get_image_reference(self):
+        return {
+            'publisher': self.publisher,
+            'offer': self.offer,
+            'sku': self.sku,
+            'version': self.version
+        }
+
 
 class AzureARMNodeDriver(NodeDriver):
     connectionCls = AzureResourceManagerConnection
@@ -183,6 +191,7 @@ class AzureARMNodeDriver(NodeDriver):
                     ex_os_disk_size=30,
                     ex_data_disk_size=None,
                     ex_availability_set=None,
+                    ex_public_ip_address=None,
                     ex_public_key=None):
         """
         Create Azure Virtual Machine using Resource Management model.
@@ -241,9 +250,10 @@ class AzureARMNodeDriver(NodeDriver):
                          'publisher': 'canonical',
                          'offer': 'ubuntuserver',
                          'version': '14.04.201608091'
+                         'os': 'Linux'
                      }
                      ```
-        :type        ex_marketplace_image: `dict`
+        :type        ex_marketplace_image: `Azure Image`
 
         :keyword     ex_os_disk_size: Optional.
                      The size of the OS disk to be attached in GB. Defaults to
@@ -260,14 +270,21 @@ class AzureARMNodeDriver(NodeDriver):
                      The availability set that the node lives in
         :type        ex_availability_set: `int`
 
+        :keyword     ex_public_ip_address: Optional.
+                     User can provide one will be created for them
+        :type        ex_public_ip_address: 'string'
+
         :keyword     ex_public_key: Optional.
                      The content of the SSH public key to be deployed on the
                      box
         :type        ex_public_key: `str`
         """
-        # Create the public IP address
-        public_ip_address = self._create_public_ip_address(
-            name, ex_resource_group_name, location.id)
+        if ex_public_ip_address:
+            public_ip_address = ex_public_ip_address
+        else:
+            # Create the public IP address
+            public_ip_address = self._create_public_ip_address(
+                name, ex_resource_group_name, location.id)
 
         # Create the network interface card with that public IP address
         nic = self._create_network_interface(name, ex_resource_group_name,
@@ -288,7 +305,7 @@ class AzureARMNodeDriver(NodeDriver):
                 'vmSize': node_size.id
             },
             'storageProfile': {
-                'imageReference': ex_marketplace_image,
+                'imageReference': ex_marketplace_image._get_image_reference(),
                 'osDisk': {
                     'name': os_disk_name,
                     'vhd': {
