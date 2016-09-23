@@ -101,6 +101,7 @@ class AzureNetworkConfig(object):
         self.public_ip_alllocation = public_ip_allocation
         self.public_ip_adress = public_ip_address
 
+
 class AzureARMNodeDriver(NodeDriver):
     connectionCls = AzureResourceManagerConnection
     name = 'Azure Virtual machines'
