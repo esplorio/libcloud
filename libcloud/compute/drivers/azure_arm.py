@@ -238,8 +238,7 @@ class AzureARMNodeDriver(NodeDriver):
     def create_node(self, name, location, node_size,
                     ex_resource_group_name,
                     ex_storage_account_name,
-                    ex_virtual_network_name,
-                    ex_subnet_name,
+                    ex_network_config,
                     ex_admin_username,
                     ex_marketplace_image,
                     ex_os_disk_size=30,
@@ -278,6 +277,12 @@ class AzureARMNodeDriver(NodeDriver):
                      The name of the storage account the disks on the node
                                               belongs to
         :type        ex_storage_account_name: `str`
+
+        :keyword     ex_network_config: Required
+                     Class holds the network information needed to create a
+                     a node e.g. the virtual network and subnet the node is
+                     connected to
+        :type        ex_network_config: `AzureNetworkConfig`
 
         :keyword     ex_virtual_network_name: Required.
                      The name of the virtual network the node would be
@@ -333,19 +338,19 @@ class AzureARMNodeDriver(NodeDriver):
                      box
         :type        ex_public_key: `str`
         """
-        if ex_public_ip_address:
-            public_ip_address = ex_public_ip_address
-        else:
-            # Create the public IP address
-            public_ip_address = self._create_public_ip_address(
-                name, ex_resource_group_name, location.id)
+        if not ex_network_config:
+            raise AssertionError(' Network configuration needed. Can be'
+                                 'like this, AzureNetworkConfig(vm, snet, '
+                                 'public_ip_allocation, public_ip_address')
+
+        if ex_resource_group_name not in ex_network_config.virtual_network.id:
+            raise AssertionError(' Resource group and virtual network do not '
+                                 'match. Enter networks within the resource'
+                                 'group')
 
         # Create the network interface card with that public IP address
         nic = self._create_network_interface(name, ex_resource_group_name,
-                                             location.id,
-                                             ex_virtual_network_name,
-                                             ex_subnet_name,
-                                             public_ip_address['name'])
+                                             location.id, ex_network_config)
         # Create the machine
         node_payload = {
             'name': name,
@@ -447,10 +452,9 @@ class AzureARMNodeDriver(NodeDriver):
         )
 
     def _create_network_interface(self, node_name, resource_group_name,
-                                  location,
-                                  virtual_network_name, subnet_name,
-                                  public_ip_address_name):
+                                  location, network_config):
         nic_name = '%s-nic' % node_name
+
         payload = {
             'location': location,
             'properties': {
@@ -458,25 +462,24 @@ class AzureARMNodeDriver(NodeDriver):
                     'name': '%s-ip' % node_name,
                     'properties': {
                         'subnet': {
-                            'id': '/subscriptions/%s/'
-                                  'resourceGroups/%s/providers/'
-                                  'Microsoft.Network/virtualNetworks/%s/'
-                                  'subnets/%s' %
-                                  (self.subscription_id, resource_group_name,
-                                   virtual_network_name, subnet_name)
+                            'id': network_config.subnet.id
                         },
-                        'privateIPAllocationMethod': 'Dynamic',
-                        'publicIPAddress': {
-                            'id': '/subscriptions/%s/resourceGroups/%s/'
-                                  'providers/Microsoft.Network/'
-                                  'publicIPAddresses/%s' %
-                                  (self.subscription_id, resource_group_name,
-                                   public_ip_address_name)
-                        }
+                        'privateIPAllocationMethod': 'Dynamic'
                     }
                 }]
             }
         }
+
+        if network_config.public_ip_alllocation:
+            if network_config.public_ip_adress:
+                public_ip_address = network_config.public_ip_adress
+            else:
+                pip = self._create_public_ip_address(
+                    node_name, resource_group_name, location.id)
+                public_ip_address = pip['id']
+
+            payload['properties']['ipConfiguartions']['properties']['publicIPAdress']['id'] = public_ip_address
+
         path = '%sresourceGroups/%s/providers/Microsoft.Network/' \
                'networkInterfaces/%s' % \
                (self._default_path_prefix, resource_group_name, nic_name)
