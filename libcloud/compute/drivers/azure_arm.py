@@ -6,7 +6,8 @@ import time
 from libcloud.common.azure import AzureResourceManagerConnection, \
     AzureRedirectException
 from libcloud.common.exceptions import RateLimitReachedError
-from libcloud.compute.base import NodeDriver, NodeLocation, NodeSize, Node
+from libcloud.compute.base import NodeDriver, NodeLocation, NodeSize, Node, \
+    NodeImage
 from libcloud.compute.drivers.azure import AzureHTTPRequest
 from libcloud.compute.drivers.vcloud import urlparse
 from libcloud.compute.types import Provider, NodeState
@@ -29,6 +30,24 @@ else:
     _str = str
     _unicode_type = str
 
+class AzureImage(NodeImage):
+    """Represents a Marketplace node image that an Azure VM can boot from."""
+
+    def __init__(self, publisher, offer, sku, version, location, driver):
+        self.publisher = publisher
+        self.offer = offer
+        self.sku = sku
+        self.version = version
+        self.location = location
+        urn = "%s:%s:%s:%s" % (self.publisher, self.offer,
+                               self.sku, self.version)
+        name = "%s %s %s %s" % (self.publisher, self.offer,
+                                self.sku, self.version)
+        super(AzureImage, self).__init__(urn, name, driver)
+
+    def __repr__(self):
+        return (('<AzureImage: id=%s, name=%s, location=%s>')
+                % (self.id, self.name, self.location))
 
 class AzureARMNodeDriver(NodeDriver):
     connectionCls = AzureResourceManagerConnection
@@ -98,6 +117,54 @@ class AzureARMNodeDriver(NodeDriver):
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_node(x) for x in raw_data['value']]
+
+    def list_images(self, location=None, publisher=None):
+        images = []
+        if location:
+            locations = [location]
+        else:
+            locations = [loc.name for loc in self.list_locations()]
+
+        for loc in locations:
+            path = '%sproviders/Microsoft.Compute/locations/%s/publishers' % loc
+            if publisher:
+                publishers = [publisher]
+            else:
+                publishers = self.list_publishers(path)
+
+            for pub in publishers:
+                offers = self.list_offers(pub['id'])
+
+                for off in offers:
+                    skus = self.list_skus(off['id'])
+
+                    for sku in skus:
+                        versions = self.list_versions(sku['id'])
+
+                        for version in versions:
+                            azure_image = AzureImage(pub['name'], off['name'], sku['name'], version['name'], self.connection.driver)
+                            images.append(azure_image)
+                            return images
+
+    def list_publishers(self, path):
+        json_response = self._perform_get(path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': pub['name'], 'id': pub['id']} for pub in raw_data]
+
+    def list_offers(self, path):
+        json_response = self._perform_get('%s/artifacttypes/vmimage/offers' % path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': offer['name'], 'id': offer['id']} for offer in raw_data]
+
+    def list_skus(self, path):
+        json_response = self._perform_get('%s/skus' % path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
+
+    def list_versions(self, path):
+        json_response = self._perform_get('%s/versions' % path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
 
     def create_node(self, name, location, node_size,
                     ex_resource_group_name,
