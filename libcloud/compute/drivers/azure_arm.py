@@ -506,6 +506,19 @@ class AzureARMNodeDriver(NodeDriver):
         output = self._perform_put(path, payload)
         return output.parse_body()
 
+    def reboot_node(self, node):
+        """
+        Reboot a node.
+
+        :param node: The node to be rebooted
+        :type node: :class:`.Node`
+
+        :return: True if the reboot was successful, otherwise False
+        :rtype: ``bool``
+        """
+        path = '%s/restart' % node.id
+        json_response = self._perform_post(path, api_version="2015-06-15")
+
     def _to_node(self, node_data):
         """
         Take the azure raw data and turn into a Node class
@@ -666,6 +679,16 @@ class AzureARMNodeDriver(NodeDriver):
         request = AzureHTTPRequest()
         request.method = 'GET'
         request.host = AZURE_RESOURCE_MANAGEMENT_HOST
+        request.path = path
+        request.path, request.query = self._update_request_uri_query(
+            request, api_version)
+        return self._perform_request(request)
+
+    def _perform_post(self, path, api_version=None, body=None):
+        request = AzureHTTPRequest()
+        request.method = 'POST'
+        request.body = body
+        request.host = AZURE_RESOURCE_MANAGEMENT_HOSTx
         request.path = path
         request.path, request.query = self._update_request_uri_query(
             request, api_version)
