@@ -30,8 +30,8 @@ else:
     _str = str
     _unicode_type = str
 
-class AzureImage(NodeImage):
 
+class AzureImage(NodeImage):
     def __init__(self, publisher, offer, sku, os, version, location, driver):
         self.publisher = publisher
         self.offer = offer
@@ -41,9 +41,9 @@ class AzureImage(NodeImage):
         self.location = location
         self.driver = driver
         urn = "%s:%s:%s:%s:%s" % (self.publisher, self.offer,
-                               self.sku, self.os, self.version)
+                                  self.sku, self.os, self.version)
         name = "%s %s %s %s %s" % (self.publisher, self.offer,
-                                self.sku, self.os, self.version)
+                                   self.sku, self.os, self.version)
         super(AzureImage, self).__init__(urn, name, driver)
 
     def __repr__(self):
@@ -60,7 +60,6 @@ class AzureImage(NodeImage):
 
 
 class AzureVirtualNetwork(object):
-
     def __init__(self, id, name, location, driver, snets=None):
         self.id = id
         self.name = name
@@ -71,15 +70,13 @@ class AzureVirtualNetwork(object):
         else:
             self.snets = self.driver.list_subnets(self.id)
 
-
     def __repr__(self):
         return ('<AzureNetwork: id=%s, name=%s, location=%s>'
                 % (self.id, self.name, self.location))
 
 
 class AzureSubNet(object):
-
-    def __init__(self, id, name, location , driver):
+    def __init__(self, id, name, driver):
         self.id = id
         self.name = name
         self.driver = driver
@@ -90,11 +87,12 @@ class AzureSubNet(object):
 
 
 class AzureNetworkConfig(object):
-
-    def __init__(self, virtual_network, subnet, public_ip_allocation, public_ip_address=None):
+    def __init__(self, virtual_network, subnet, public_ip_allocation,
+                 public_ip_address=None):
         snet_names = [snet.name for snet in virtual_network.snets]
         if subnet.name not in snet_names:
-            raise AssertionError("Invalid Subnet: Subnet is part of the Virtual Network given")
+            raise AssertionError(
+                "Invalid Subnet: Subnet is part of the Virtual Network given")
 
         self.virtual_network = virtual_network
         self.subnet = subnet
@@ -160,8 +158,8 @@ class AzureARMNodeDriver(NodeDriver):
         """
         if resource_group:
             path = '%sresourceGroups/%s/providers' \
-               '/Microsoft.Compute/virtualmachines' % \
-               (self._default_path_prefix, resource_group)
+                   '/Microsoft.Compute/virtualmachines' % \
+                   (self._default_path_prefix, resource_group)
         else:
             path = '%ssubscriptions/%s/providers/Microsoft.Compute' \
                    '/virtualMachines' \
@@ -196,7 +194,10 @@ class AzureARMNodeDriver(NodeDriver):
 
                         for version in versions:
                             os = self.get_os_from_version(version['id'])
-                            azure_image = AzureImage(pub['name'], off['name'], sku['name'], os, version['name'], self.connection.driver)
+                            azure_image = AzureImage(pub['name'], off['name'],
+                                                     sku['name'], os,
+                                                     version['name'], loc,
+                                                     self.connection.driver)
                             images.append(azure_image)
                             return images
 
@@ -206,27 +207,34 @@ class AzureARMNodeDriver(NodeDriver):
         return [{'name': pub['name'], 'id': pub['id']} for pub in raw_data]
 
     def list_offers(self, path):
-        json_response = self._perform_get('%s/artifacttypes/vmimage/offers' % path, api_version='2016-03-30')
+        json_response = self._perform_get(
+            '%s/artifacttypes/vmimage/offers' % path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
-        return [{'name': offer['name'], 'id': offer['id']} for offer in raw_data]
+        return [{'name': offer['name'], 'id': offer['id']} for offer in
+                raw_data]
 
     def list_skus(self, path):
-        json_response = self._perform_get('%s/skus' % path, api_version='2016-03-30')
+        json_response = self._perform_get('%s/skus' % path,
+                                          api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
 
     def list_versions(self, path):
-        json_response = self._perform_get('%s/versions' % path, api_version='2016-03-30')
+        json_response = self._perform_get('%s/versions' % path,
+                                          api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
 
     def list_virtualnetworks(self):
-        json_response = self._perform_get('%sproviders/Microsoft.Netowork/virtualnetworks', api_version='2016-03-30')
+        json_response = self._perform_get(
+            '%sproviders/Microsoft.Netowork/virtualnetworks',
+            api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_virtual_network(x) for x in raw_data['value']]
 
     def list_subnets(self, path):
-        json_response = self._perform_get('%s/subnets' % path, api_version='2016-03-30')
+        json_response = self._perform_get('%s/subnets' % path,
+                                          api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_subnet(x) for x in raw_data['value']]
 
@@ -283,17 +291,6 @@ class AzureARMNodeDriver(NodeDriver):
                      a node e.g. the virtual network and subnet the node is
                      connected to
         :type        ex_network_config: `AzureNetworkConfig`
-
-        :keyword     ex_virtual_network_name: Required.
-                     The name of the virtual network the node would be
-                     connected to
-        :type        ex_virtual_network_name: `str`
-
-        :keyword     ex_subnet_name: Required.
-                     The name of the subnet inside `ex_virtual_network_name`
-                     the node would
-                     be connected to
-        :type        ex_subnet_name: `str`
 
         :keyword     ex_admin_username: Required.
                      The name of the default admin user on the node
@@ -478,7 +475,8 @@ class AzureARMNodeDriver(NodeDriver):
                     node_name, resource_group_name, location.id)
                 public_ip_address = pip['id']
 
-            payload['properties']['ipConfiguartions']['properties']['publicIPAdress']['id'] = public_ip_address
+            payload['properties']['ipConfiguartions']['properties'][
+                'publicIPAdress']['id'] = public_ip_address
 
         path = '%sresourceGroups/%s/providers/Microsoft.Network/' \
                'networkInterfaces/%s' % \
