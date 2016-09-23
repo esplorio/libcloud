@@ -32,16 +32,17 @@ else:
 
 class AzureImage(NodeImage):
 
-    def __init__(self, publisher, offer, sku, version, location, driver):
+    def __init__(self, publisher, offer, sku, os, version, location, driver):
         self.publisher = publisher
         self.offer = offer
         self.sku = sku
+        self.os = os
         self.version = version
         self.location = location
-        urn = "%s:%s:%s:%s" % (self.publisher, self.offer,
-                               self.sku, self.version)
-        name = "%s %s %s %s" % (self.publisher, self.offer,
-                                self.sku, self.version)
+        urn = "%s:%s:%s:%s:%s" % (self.publisher, self.offer,
+                               self.sku, self.os, self.version)
+        name = "%s %s %s %s %s" % (self.publisher, self.offer,
+                                self.sku, self.os, self.version)
         super(AzureImage, self).__init__(urn, name, driver)
 
     def __repr__(self):
@@ -142,7 +143,8 @@ class AzureARMNodeDriver(NodeDriver):
                         versions = self.list_versions(sku['id'])
 
                         for version in versions:
-                            azure_image = AzureImage(pub['name'], off['name'], sku['name'], version['name'], self.connection.driver)
+                            os = self.get_os_from_version(version['id'])
+                            azure_image = AzureImage(pub['name'], off['name'], sku['name'], os, version['name'], self.connection.driver)
                             images.append(azure_image)
                             return images
 
@@ -165,6 +167,11 @@ class AzureARMNodeDriver(NodeDriver):
         json_response = self._perform_get('%s/versions' % path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
+
+    def get_os_from_version(self, path):
+        json_response = self._perform_get(path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return raw_data['properties']['osDiskImage']['operatingSystem']
 
     def create_node(self, name, location, node_size,
                     ex_resource_group_name,
