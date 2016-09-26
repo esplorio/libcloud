@@ -516,6 +516,7 @@ class AzureARMNodeDriver(NodeDriver):
         :return: True if the reboot was successful, otherwise False
         :rtype: ``bool``
         """
+        self.get_state_of_node()
         path = '%s/restart' % node.id
         json_response = self._perform_post(path, api_version="2015-06-15")
 
@@ -641,18 +642,23 @@ class AzureARMNodeDriver(NodeDriver):
             driver=self.connection.driver
         )
 
-    def get_state_of_node(self, resource_group, vmname):
-        path = '%sresourceGroups/%s/providers/Microsoft.Compute/%s/InstanceView' %\
-               (self._default_path_prefix, resource_group, vmname)
+    def get_state_of_node(self, Node):
+        """
+        Returns the state of a virtual machine
+        :param resource_group: Resource the virtual machine is assocaited with
+        :param vmname: Name of the virtual machine
+        :return: NODESTATE
+        """
+        path = '%s/InstanceView' % Node.id
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_date = json_response.parse_body()
         raw_state = raw_date.get('statuses')[1].get('code')
         if raw_state == 'PowerState/stopped':
-            return NodeState.STOPPED
+            return NodeState.SUSPENDED
         if raw_state == 'PowerState/running':
             return NodeState.RUNNING
         if raw_state == 'PowerState/deallocated':
-            return NodeState.TERMINATED
+                return NodeState.STOPPED
 
     @property
     def _default_path_prefix(self):
