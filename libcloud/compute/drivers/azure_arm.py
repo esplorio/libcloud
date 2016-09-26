@@ -688,7 +688,7 @@ class AzureARMNodeDriver(NodeDriver):
         request = AzureHTTPRequest()
         request.method = 'POST'
         request.body = body
-        request.host = AZURE_RESOURCE_MANAGEMENT_HOSTx
+        request.host = AZURE_RESOURCE_MANAGEMENT_HOST
         request.path = path
         request.path, request.query = self._update_request_uri_query(
             request, api_version)
