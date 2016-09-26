@@ -641,6 +641,19 @@ class AzureARMNodeDriver(NodeDriver):
             driver=self.connection.driver
         )
 
+    def get_state_of_node(self, resource_group, vmname):
+        path = '%sresourceGroups/%s/providers/Microsoft.Compute/%s/InstanceView' %\
+               (self._default_path_prefix, resource_group, vmname)
+        json_response = self._perform_get(path, api_version='2016-03-30')
+        raw_date = json_response.parse_body()
+        raw_state = raw_date.get('statuses')[1].get('code')
+        if raw_state == 'PowerState/stopped':
+            return NodeState.STOPPED
+        if raw_state == 'PowerState/running':
+            return NodeState.RUNNING
+        if raw_state == 'PowerState/deallocated':
+            return NodeState.TERMINATED
+
     @property
     def _default_path_prefix(self):
         """Everything starts with the subscription prefix"""
