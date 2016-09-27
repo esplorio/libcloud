@@ -527,6 +527,23 @@ class AzureARMNodeDriver(NodeDriver):
 
         return int(json_response.status) == 200
 
+    def destroy_node(self, node):
+        """
+        Destroy a node.
+
+        Depending upon the provider, this may destroy all data associated with
+        the node, including backups.
+
+        :param node: The node to be destroyed
+        :type node: :class:`.Node`
+
+        :return: True if the destroy was successful, False otherwise.
+        :rtype: ``bool``
+        """
+
+        json_response = self._perform_delete(node.id, api_version='2016-03-30')
+        return json_response.success()
+
     def _to_node(self, node_data):
         """
         Take the azure raw data and turn into a Node class
@@ -710,6 +727,16 @@ class AzureARMNodeDriver(NodeDriver):
     def _perform_post(self, path, api_version=None, body=None):
         request = AzureHTTPRequest()
         request.method = 'POST'
+        request.body = body
+        request.host = AZURE_RESOURCE_MANAGEMENT_HOST
+        request.path = path
+        request.path, request.query = self._update_request_uri_query(
+            request, api_version)
+        return self._perform_request(request)
+
+    def _perform_delete(self, path, api_version=None, body=None):
+        request = AzureHTTPRequest()
+        request.method = 'DELETE'
         request.body = body
         request.host = AZURE_RESOURCE_MANAGEMENT_HOST
         request.path = path
