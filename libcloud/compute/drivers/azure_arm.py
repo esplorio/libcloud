@@ -516,9 +516,16 @@ class AzureARMNodeDriver(NodeDriver):
         :return: True if the reboot was successful, otherwise False
         :rtype: ``bool``
         """
-        self.get_state_of_node()
+        state = self.get_state_of_node(Node)
+        if state == NodeState.RUNNING:
+            raise AssertionError("Node is already running")
+        if state == NodeState.STOPPED:
+            raise AssertionError("Node has been deallocated, cannot be rebooted")
+
         path = '%s/restart' % node.id
         json_response = self._perform_post(path, api_version="2015-06-15")
+
+        return int(json_response.status) == 200
 
     def _to_node(self, node_data):
         """
@@ -645,9 +652,6 @@ class AzureARMNodeDriver(NodeDriver):
     def get_state_of_node(self, Node):
         """
         Returns the state of a virtual machine
-        :param resource_group: Resource the virtual machine is assocaited with
-        :param vmname: Name of the virtual machine
-        :return: NODESTATE
         """
         path = '%s/InstanceView' % Node.id
         json_response = self._perform_get(path, api_version='2016-03-30')
