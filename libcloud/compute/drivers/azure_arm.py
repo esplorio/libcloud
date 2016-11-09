@@ -227,7 +227,7 @@ class AzureARMNodeDriver(NodeDriver):
 
     def list_virtual_networks(self):
         json_response = self._perform_get(
-            '%s/providers/Microsoft.Network/virtualnetworks',
+            '%sproviders/Microsoft.Network/virtualnetworks' % self._default_path_prefix,
             api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_virtual_network(x) for x in raw_data['value']]
