@@ -453,7 +453,7 @@ class AzureARMNodeDriver(NodeDriver):
         nic_name = '%s-nic' % node_name
 
         payload = {
-            'location': location,
+            'location': location.id,
             'properties': {
                 'ipConfigurations': [{
                     'name': '%s-ip' % node_name,
@@ -472,7 +472,7 @@ class AzureARMNodeDriver(NodeDriver):
                 public_ip_address = network_config.public_ip_adress
             else:
                 pip = self._create_public_ip_address(
-                    node_name, resource_group_name, location.id)
+                    node_name, resource_group_name, location)
                 public_ip_address = pip['id']
 
             payload['properties']['ipConfigurations'][0]['properties']['publicIPAddress'] = {
@@ -489,7 +489,7 @@ class AzureARMNodeDriver(NodeDriver):
                                   location):
         public_ip_address_name = '%s-public-ip' % node_name
         payload = {
-            'location': location,
+            'location': location.id,
             'properties': {
                 'publicIPAllocationMethod': 'Dynamic',
                 'publicIPAddressVersion': "IPv4",
