@@ -347,7 +347,7 @@ class AzureARMNodeDriver(NodeDriver):
 
         # Create the network interface card with that public IP address
         nic = self._create_network_interface(name, ex_resource_group_name,
-                                             location.id, ex_network_config)
+                                             location, ex_network_config)
         # Create the machine
         node_payload = {
             'name': name,
