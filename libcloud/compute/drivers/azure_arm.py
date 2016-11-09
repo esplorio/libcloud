@@ -178,23 +178,23 @@ class AzureARMNodeDriver(NodeDriver):
 
         for loc in locations:
             path = '%sproviders/Microsoft.Compute/locations/%s/publishers' % (self._default_path_prefix, loc)
+            publishers = self.list_publishers(path)
+
             if publisher:
-                publishers = [publisher]
-            else:
-                publishers = self.list_publishers(path)
+                publishers = [x for x in publishers if x['id'] == publisher or x['name'] == publisher]
 
-            for pub in publishers:
-                offers = self.list_offers(pub['id'])
+            for publisher in publishers:
+                offers = self.list_offers(publisher['id'])
 
-                for off in offers:
-                    skus = self.list_skus(off['id'])
+                for offer in offers:
+                    skus = self.list_skus(offer['id'])
 
                     for sku in skus:
                         versions = self.list_versions(sku['id'])
 
                         for version in versions:
                             os = self.get_os_from_version(version['id'])
-                            azure_image = AzureImage(pub['name'], off['name'],
+                            azure_image = AzureImage(publisher['name'], offer['name'],
                                                      sku['name'], os,
                                                      version['name'], loc,
                                                      self.connection.driver)
