@@ -650,7 +650,7 @@ class AzureARMNodeDriver(NodeDriver):
         )
 
     def _to_virtual_network(self, network_data):
-        snets = [self._to_subnet(x) for x in network_data['subnets']]
+        snets = [self._to_subnet(x) for x in network_data['properties']['subnets']]
         return AzureVirtualNetwork(
             id=network_data.get('id'),
             name=network_data.get('name'),
