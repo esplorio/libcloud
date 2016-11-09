@@ -299,17 +299,7 @@ class AzureARMNodeDriver(NodeDriver):
         :keyword     ex_marketplace_image: Required.
                      The image from market place to be used for setting up the
                      OS disk.
-                     For example:
-                     ```
-                     ubuntu_image = {
-                         'sku': '14.04.5-LTS',
-                         'publisher': 'canonical',
-                         'offer': 'ubuntuserver',
-                         'version': '14.04.201608091'
-                         'os': 'Linux'
-                     }
-                     ```
-        :type        ex_marketplace_image: `Azure Image`
+        :type        ex_marketplace_image: `AzureImage`
 
         :keyword     ex_os_disk_size: Optional.
                      The size of the OS disk to be attached in GB. Defaults to
