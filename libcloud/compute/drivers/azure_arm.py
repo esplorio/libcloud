@@ -475,7 +475,7 @@ class AzureARMNodeDriver(NodeDriver):
                     node_name, resource_group_name, location.id)
                 public_ip_address = pip['id']
 
-            payload['properties']['ipConfigurations']['properties']['publicIPAddress']['id'] = public_ip_address
+            payload['properties']['ipConfigurations'][0]['properties']['publicIPAddress']['id'] = public_ip_address
 
         path = '%sresourceGroups/%s/providers/Microsoft.Network/' \
                'networkInterfaces/%s' % \
