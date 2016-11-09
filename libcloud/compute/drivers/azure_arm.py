@@ -181,10 +181,12 @@ class AzureARMNodeDriver(NodeDriver):
             publishers = self.list_publishers(path)
 
             if publisher:
-                publishers = [x for x in publishers if x['id'] == publisher or x['name'] == publisher]
+                publishers = [x for x in publishers
+                              if x['id'].lower() == publisher.lower() or
+                              x['name'].lower() == publisher.lower()]
 
-            for publisher in publishers:
-                offers = self.list_offers(publisher['id'])
+            for pub in publishers:
+                offers = self.list_offers(pub['id'])
 
                 for offer in offers:
                     skus = self.list_skus(offer['id'])
@@ -194,7 +196,7 @@ class AzureARMNodeDriver(NodeDriver):
 
                         for version in versions:
                             os = self.get_os_from_version(version['id'])
-                            azure_image = AzureImage(publisher['name'], offer['name'],
+                            azure_image = AzureImage(pub['name'], offer['name'],
                                                      sku['name'], os,
                                                      version['name'], loc,
                                                      self.connection.driver)
