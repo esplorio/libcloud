@@ -225,9 +225,9 @@ class AzureARMNodeDriver(NodeDriver):
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
 
-    def list_virtualnetworks(self):
+    def list_virtual_networks(self):
         json_response = self._perform_get(
-            '%sproviders/Microsoft.Netowork/virtualnetworks',
+            '%s/providers/Microsoft.Network/virtualnetworks',
             api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_virtual_network(x) for x in raw_data['value']]
