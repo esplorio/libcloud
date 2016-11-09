@@ -177,7 +177,7 @@ class AzureARMNodeDriver(NodeDriver):
             locations = [loc.name for loc in self.list_locations()]
 
         for loc in locations:
-            path = '%sproviders/Microsoft.Compute/locations/%s/publishers' % loc
+            path = '%sproviders/Microsoft.Compute/locations/%s/publishers' % (self._default_path_prefix, loc)
             if publisher:
                 publishers = [publisher]
             else:
