@@ -201,7 +201,9 @@ class AzureARMNodeDriver(NodeDriver):
                                                      version['name'], loc,
                                                      self.connection.driver)
                             images.append(azure_image)
-                            return images
+
+        # Finally, return the images
+        return images
 
     def list_publishers(self, path):
         json_response = self._perform_get(path, api_version='2016-03-30')
