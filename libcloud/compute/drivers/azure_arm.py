@@ -147,10 +147,10 @@ class AzureARMNodeDriver(NodeDriver):
         """
         List all nodes in a resource group
         """
-        if resource_group:
+        if ex_resource_group:
             path = '%sresourceGroups/%s/providers' \
                    '/Microsoft.Compute/virtualmachines' % \
-                   (self._default_path_prefix, resource_group)
+                   (self._default_path_prefix, ex_resource_group)
         else:
             path = '%ssubscriptions/%s/providers/Microsoft.Compute' \
                    '/virtualMachines' \
@@ -160,7 +160,7 @@ class AzureARMNodeDriver(NodeDriver):
         raw_data = json_response.parse_body()
         return [self._to_node(x) for x in raw_data['value']]
 
-    def list_sizes(self, location):
+    def list_sizes(self, location=None):
         """
         List all image sizes available for location
         """
