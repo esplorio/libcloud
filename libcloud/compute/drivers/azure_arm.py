@@ -67,7 +67,7 @@ class AzureVirtualNetwork(object):
         if snets:
             self.snets = snets
         else:
-            self.snets = self.driver.list_subnets(self.id)
+            self.snets = self.driver.ex_list_subnets(self.id)
 
     def __repr__(self):
         return ('<AzureNetwork: id=%s, name=%s, location=%s>'
@@ -387,7 +387,7 @@ class AzureARMNodeDriver(NodeDriver):
         :return: True if the reboot was successful, otherwise False
         :rtype: ``bool``
         """
-        state = self.get_state_of_node(Node)
+        state = self.ex_get_state_of_node(Node)
         if state == NodeState.RUNNING:
             raise AssertionError("Node is already running")
         if state == NodeState.STOPPED:
@@ -426,7 +426,7 @@ class AzureARMNodeDriver(NodeDriver):
         for loc in locations:
             path = '%sproviders/Microsoft.Compute/locations/%s/publishers'\
                    % (self._default_path_prefix, loc)
-            publishers = self.list_publishers(path)
+            publishers = self.ex_list_publishers(path)
 
             if publisher:
                 publishers = [x for x in publishers
@@ -434,13 +434,13 @@ class AzureARMNodeDriver(NodeDriver):
                               x['name'].lower() == publisher.lower()]
 
             for pub in publishers:
-                offers = self.list_offers(pub['id'])
+                offers = self.ex_list_offers(pub['id'])
 
                 for offer in offers:
-                    skus = self.list_skus(offer['id'])
+                    skus = self.ex_list_skus(offer['id'])
 
                     for sku in skus:
-                        versions = self.list_versions(sku['id'])
+                        versions = self.ex_list_versions(sku['id'])
 
                         for version in versions:
                             os = self.get_os_from_version(version['id'])
@@ -454,31 +454,31 @@ class AzureARMNodeDriver(NodeDriver):
         # Finally, return the images
         return images
 
-    def list_publishers(self, path):
+    def ex_list_publishers(self, path):
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': pub['name'], 'id': pub['id']} for pub in raw_data]
 
-    def list_offers(self, path):
+    def ex_list_offers(self, path):
         json_response = self._perform_get(
             '%s/artifacttypes/vmimage/offers' % path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': offer['name'], 'id': offer['id']} for offer in
                 raw_data]
 
-    def list_skus(self, path):
+    def ex_list_skus(self, path):
         json_response = self._perform_get('%s/skus' % path,
                                           api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
 
-    def list_versions(self, path):
+    def ex_list_versions(self, path):
         json_response = self._perform_get('%s/versions' % path,
                                           api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
 
-    def list_virtual_networks(self):
+    def ex_list_virtual_networks(self):
         json_response = self._perform_get(
             '%sproviders/Microsoft.Network/virtualnetworks' %
             self._default_path_prefix,
@@ -486,7 +486,7 @@ class AzureARMNodeDriver(NodeDriver):
         raw_data = json_response.parse_body()
         return [self._to_virtual_network(x) for x in raw_data['value']]
 
-    def list_subnets(self, path):
+    def ex_list_subnets(self, path):
         json_response = self._perform_get('%s/subnets' % path,
                                           api_version='2016-03-30')
         raw_data = json_response.parse_body()
@@ -680,7 +680,7 @@ class AzureARMNodeDriver(NodeDriver):
             driver=self.connection.driver
         )
 
-    def get_state_of_node(self, Node):
+    def ex_get_state_of_node(self, Node):
         """
         Returns the state of a virtual machine
         """
