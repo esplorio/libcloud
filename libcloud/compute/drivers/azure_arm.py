@@ -143,27 +143,6 @@ class AzureARMNodeDriver(NodeDriver):
             **kwargs
         )
 
-    def list_locations(self):
-        """
-        Lists all locations
-
-        :rtype: ``list`` of :class:`NodeLocation`
-        """
-        path = '%slocations' % self._default_path_prefix
-        json_response = self._perform_get(path)
-        raw_data = json_response.parse_body()
-        return [self._to_location(x) for x in raw_data['value']]
-
-    def list_sizes(self, location):
-        """
-        List all image sizes available for location
-        """
-        path = '%sproviders/Microsoft.Compute/locations/%s/vmSizes' % (
-            self._default_path_prefix, location)
-        json_response = self._perform_get(path, api_version='2016-03-30')
-        raw_data = json_response.parse_body()
-        return [self._to_size(x) for x in raw_data['value']]
-
     def list_nodes(self, resource_group=None):
         """
         List all nodes in a resource group
@@ -181,86 +160,26 @@ class AzureARMNodeDriver(NodeDriver):
         raw_data = json_response.parse_body()
         return [self._to_node(x) for x in raw_data['value']]
 
-    def list_images(self, location=None, publisher=None):
-        images = []
-        if location:
-            locations = [location]
-        else:
-            locations = [loc.name for loc in self.list_locations()]
-
-        for loc in locations:
-            path = '%sproviders/Microsoft.Compute/locations/%s/publishers'\
-                   % (self._default_path_prefix, loc)
-            publishers = self.list_publishers(path)
-
-            if publisher:
-                publishers = [x for x in publishers
-                              if x['id'].lower() == publisher.lower() or
-                              x['name'].lower() == publisher.lower()]
-
-            for pub in publishers:
-                offers = self.list_offers(pub['id'])
-
-                for offer in offers:
-                    skus = self.list_skus(offer['id'])
-
-                    for sku in skus:
-                        versions = self.list_versions(sku['id'])
-
-                        for version in versions:
-                            os = self.get_os_from_version(version['id'])
-                            azure_image = AzureImage(pub['name'],
-                                                     offer['name'],
-                                                     sku['name'], os,
-                                                     version['name'], loc,
-                                                     self.connection.driver)
-                            images.append(azure_image)
-
-        # Finally, return the images
-        return images
-
-    def list_publishers(self, path):
+    def list_sizes(self, location):
+        """
+        List all image sizes available for location
+        """
+        path = '%sproviders/Microsoft.Compute/locations/%s/vmSizes' % (
+            self._default_path_prefix, location)
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
-        return [{'name': pub['name'], 'id': pub['id']} for pub in raw_data]
+        return [self._to_size(x) for x in raw_data['value']]
 
-    def list_offers(self, path):
-        json_response = self._perform_get(
-            '%s/artifacttypes/vmimage/offers' % path, api_version='2016-03-30')
-        raw_data = json_response.parse_body()
-        return [{'name': offer['name'], 'id': offer['id']} for offer in
-                raw_data]
+    def list_locations(self):
+        """
+        Lists all locations
 
-    def list_skus(self, path):
-        json_response = self._perform_get('%s/skus' % path,
-                                          api_version='2016-03-30')
+        :rtype: ``list`` of :class:`NodeLocation`
+        """
+        path = '%slocations' % self._default_path_prefix
+        json_response = self._perform_get(path)
         raw_data = json_response.parse_body()
-        return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
-
-    def list_versions(self, path):
-        json_response = self._perform_get('%s/versions' % path,
-                                          api_version='2016-03-30')
-        raw_data = json_response.parse_body()
-        return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
-
-    def list_virtual_networks(self):
-        json_response = self._perform_get(
-            '%sproviders/Microsoft.Network/virtualnetworks' %
-            self._default_path_prefix,
-            api_version='2016-03-30')
-        raw_data = json_response.parse_body()
-        return [self._to_virtual_network(x) for x in raw_data['value']]
-
-    def list_subnets(self, path):
-        json_response = self._perform_get('%s/subnets' % path,
-                                          api_version='2016-03-30')
-        raw_data = json_response.parse_body()
-        return [self._to_subnet(x) for x in raw_data['value']]
-
-    def get_os_from_version(self, path):
-        json_response = self._perform_get(path, api_version='2016-03-30')
-        raw_data = json_response.parse_body()
-        return raw_data['properties']['osDiskImage']['operatingSystem']
+        return [self._to_location(x) for x in raw_data['value']]
 
     def create_node(self, name, location, node_size,
                     ex_resource_group_name,
@@ -273,6 +192,7 @@ class AzureARMNodeDriver(NodeDriver):
                     ex_availability_set=None,
                     ex_public_ip_address=None,
                     ex_public_key=None):
+
         """
         Create Azure Virtual Machine using Resource Management model.
 
@@ -457,6 +377,126 @@ class AzureARMNodeDriver(NodeDriver):
             driver=self.connection.driver,
         )
 
+    def reboot_node(self, node):
+        """
+        Reboot a node.
+
+        :param node: The node to be rebooted
+        :type node: :class:`.Node`
+
+        :return: True if the reboot was successful, otherwise False
+        :rtype: ``bool``
+        """
+        state = self.get_state_of_node(Node)
+        if state == NodeState.RUNNING:
+            raise AssertionError("Node is already running")
+        if state == NodeState.STOPPED:
+            raise AssertionError("Node has been deallocated, "
+                                 "cannot be rebooted")
+
+        path = '%s/restart' % node.id
+        json_response = self._perform_post(path, api_version="2015-06-15")
+
+        return int(json_response.status) == 200
+
+    def destroy_node(self, node):
+        """
+        Destroy a node.
+
+        Depending upon the provider, this may destroy all data associated with
+        the node, including backups.
+
+        :param node: The node to be destroyed
+        :type node: :class:`.Node`
+
+        :return: True if the destroy was successful, False otherwise.
+        :rtype: ``bool``
+        """
+
+        json_response = self._perform_delete(node.id, api_version='2016-03-30')
+        return json_response.success()
+
+    def list_images(self, location=None, publisher=None):
+        images = []
+        if location:
+            locations = [location]
+        else:
+            locations = [loc.name for loc in self.list_locations()]
+
+        for loc in locations:
+            path = '%sproviders/Microsoft.Compute/locations/%s/publishers'\
+                   % (self._default_path_prefix, loc)
+            publishers = self.list_publishers(path)
+
+            if publisher:
+                publishers = [x for x in publishers
+                              if x['id'].lower() == publisher.lower() or
+                              x['name'].lower() == publisher.lower()]
+
+            for pub in publishers:
+                offers = self.list_offers(pub['id'])
+
+                for offer in offers:
+                    skus = self.list_skus(offer['id'])
+
+                    for sku in skus:
+                        versions = self.list_versions(sku['id'])
+
+                        for version in versions:
+                            os = self.get_os_from_version(version['id'])
+                            azure_image = AzureImage(pub['name'],
+                                                     offer['name'],
+                                                     sku['name'], os,
+                                                     version['name'], loc,
+                                                     self.connection.driver)
+                            images.append(azure_image)
+
+        # Finally, return the images
+        return images
+
+    def list_publishers(self, path):
+        json_response = self._perform_get(path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': pub['name'], 'id': pub['id']} for pub in raw_data]
+
+    def list_offers(self, path):
+        json_response = self._perform_get(
+            '%s/artifacttypes/vmimage/offers' % path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': offer['name'], 'id': offer['id']} for offer in
+                raw_data]
+
+    def list_skus(self, path):
+        json_response = self._perform_get('%s/skus' % path,
+                                          api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
+
+    def list_versions(self, path):
+        json_response = self._perform_get('%s/versions' % path,
+                                          api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [{'name': sku['name'], 'id': sku['id']} for sku in raw_data]
+
+    def list_virtual_networks(self):
+        json_response = self._perform_get(
+            '%sproviders/Microsoft.Network/virtualnetworks' %
+            self._default_path_prefix,
+            api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [self._to_virtual_network(x) for x in raw_data['value']]
+
+    def list_subnets(self, path):
+        json_response = self._perform_get('%s/subnets' % path,
+                                          api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return [self._to_subnet(x) for x in raw_data['value']]
+
+    def get_os_from_version(self, path):
+        json_response = self._perform_get(path, api_version='2016-03-30')
+        raw_data = json_response.parse_body()
+        return raw_data['properties']['osDiskImage']['operatingSystem']
+
     def _create_network_interface(self, node_name, resource_group_name,
                                   location, network_config):
         nic_name = '%s-nic' % node_name
@@ -516,45 +556,6 @@ class AzureARMNodeDriver(NodeDriver):
 
         output = self._perform_put(path, payload)
         return output.parse_body()
-
-    def reboot_node(self, node):
-        """
-        Reboot a node.
-
-        :param node: The node to be rebooted
-        :type node: :class:`.Node`
-
-        :return: True if the reboot was successful, otherwise False
-        :rtype: ``bool``
-        """
-        state = self.get_state_of_node(Node)
-        if state == NodeState.RUNNING:
-            raise AssertionError("Node is already running")
-        if state == NodeState.STOPPED:
-            raise AssertionError("Node has been deallocated, "
-                                 "cannot be rebooted")
-
-        path = '%s/restart' % node.id
-        json_response = self._perform_post(path, api_version="2015-06-15")
-
-        return int(json_response.status) == 200
-
-    def destroy_node(self, node):
-        """
-        Destroy a node.
-
-        Depending upon the provider, this may destroy all data associated with
-        the node, including backups.
-
-        :param node: The node to be destroyed
-        :type node: :class:`.Node`
-
-        :return: True if the destroy was successful, False otherwise.
-        :rtype: ``bool``
-        """
-
-        json_response = self._perform_delete(node.id, api_version='2016-03-30')
-        return json_response.success()
 
     def _to_node(self, node_data):
         """
