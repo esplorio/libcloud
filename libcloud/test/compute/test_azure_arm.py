@@ -1,4 +1,3 @@
-import httplib
 import os
 
 import libcloud.security
@@ -6,6 +5,7 @@ from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider, NodeState
 from libcloud.test import LibcloudTestCase, MockHttp
 from libcloud.test.file_fixtures import ComputeFileFixtures
+from libcloud.utils.py3 import httplib
 
 
 class AzureArmNodeDriverTests(LibcloudTestCase):
@@ -64,9 +64,19 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
         self.assertEqual(["1.1.1.1"], vmimage.public_ips)
         self.assertEqual(["10.1.1.1"], vmimage.private_ips)
 
+    def test_list_nodes_without_resource_group(self):
+        vmimages = self.driver.list_nodes()
+        self.assertEqual(len(vmimages), 1)
+        vmimage = vmimages[0]
+        self.assertEqual("myvm", vmimage.id)
+        self.assertEqual("myvm", vmimage.id)
+        self.assertEqual(NodeState.RUNNING, vmimage.state)
+        self.assertEqual(["1.1.1.1"], vmimage.public_ips)
+        self.assertEqual(["10.1.1.1"], vmimage.private_ips)
 
-    def test_list_nodes_returned_no_deployments(self):
-        raise NotImplementedError
+    def test_list_nodes_with_wrong_resource_group(self):
+        self.assertRaises(AssertionError, self.driver.list_nodes, 'fakegroup')
+
 
     def test_create_node_and_deployment_one_node(self):
         raise NotImplementedError
@@ -89,7 +99,7 @@ class AzureArmMockHttp(MockHttp):
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
 
-    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_virtualmachines(self, method, url, body, headers):
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_virtualMachines(self, method, url, body, headers):
         """ Request for the list of nodes of the subscriber """
         if method == "GET":
             body = self.fixtures.load(
@@ -97,7 +107,7 @@ class AzureArmMockHttp(MockHttp):
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
 
-    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Compute_virtualmachines(self, method, url, body, headers):
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Compute_virtualMachines(self, method, url, body, headers):
         """ Requests list of nodes for the resource group """
         if method == "GET":
             body = self.fixtures.load(
@@ -105,7 +115,7 @@ class AzureArmMockHttp(MockHttp):
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
 
-    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_fakegroup_providers_Microsoft_Compute_virtualmachines(self, method, url, body, headers):
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_fakegroup_providers_Microsoft_Compute_virtualMachines(self, method, url, body, headers):
         """ Bad request for nodes in a resource group that not exist """
         if method == "GET":
             body = self.fixtures.load(

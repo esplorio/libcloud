@@ -149,15 +149,16 @@ class AzureARMNodeDriver(NodeDriver):
         """
         if ex_resource_group:
             path = '%sresourceGroups/%s/providers' \
-                   '/Microsoft.Compute/virtualmachines' % \
+                   '/Microsoft.Compute/virtualMachines' % \
                    (self._default_path_prefix, ex_resource_group)
         else:
-            path = '%ssubscriptions/%s/providers/Microsoft.Compute' \
-                   '/virtualMachines' \
-                   % (self._default_path_prefix, self.subscription_id)
+            path = '%sproviders/Microsoft.Compute/virtualMachines' \
+                   % self._default_path_prefix
 
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
+        if (int(json_response.status)) != 200:
+            raise AssertionError('%s' %raw_data['error']['message'] )
         return [self._to_node(x) for x in raw_data['value']]
 
     def list_sizes(self, location=None):
