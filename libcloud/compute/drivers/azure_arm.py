@@ -143,7 +143,7 @@ class AzureARMNodeDriver(NodeDriver):
             **kwargs
         )
 
-    def list_nodes(self, resource_group=None):
+    def list_nodes(self, ex_resource_group=None):
         """
         List all nodes in a resource group
         """
