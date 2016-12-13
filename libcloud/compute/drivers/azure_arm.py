@@ -443,7 +443,7 @@ class AzureARMNodeDriver(NodeDriver):
                         versions = self.ex_list_versions(sku['id'])
 
                         for version in versions:
-                            os = self.get_os_from_version(version['id'])
+                            os = self._get_os_from_version(version['id'])
                             azure_image = AzureImage(pub['name'],
                                                      offer['name'],
                                                      sku['name'], os,
@@ -492,7 +492,7 @@ class AzureARMNodeDriver(NodeDriver):
         raw_data = json_response.parse_body()
         return [self._to_subnet(x) for x in raw_data['value']]
 
-    def get_os_from_version(self, path):
+    def _get_os_from_version(self, path):
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return raw_data['properties']['osDiskImage']['operatingSystem']
