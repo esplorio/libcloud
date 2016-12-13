@@ -161,7 +161,7 @@ class AzureARMNodeDriver(NodeDriver):
             raise AssertionError('%s' %raw_data['error']['message'] )
         return [self._to_node(x) for x in raw_data['value']]
 
-    def list_sizes(self, location=None):
+    def list_sizes(self, location):
         """
         List all image sizes available for location
         """
