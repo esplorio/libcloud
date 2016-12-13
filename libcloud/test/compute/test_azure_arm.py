@@ -141,3 +141,39 @@ class AzureArmMockHttp(MockHttp):
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers(self, method, url, body, headers):
+        """ A request for the publishers in south brazil (only one is returned out of many possible due to tests """
+        if method == "GET":
+            body = self.fixures.load(
+                'brazil_south_publishers.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow(self, method, url, body, headers):
+        """" Request for offers from the publisher 4psa"""
+        if method == "GET":
+            body = self.fixures.load(
+                '4psa_offers.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_skus(self, method, url, body, headers):
+        """ Request for skus for voipnow"""
+        if method == "GET":
+            body = self.fixures.load(
+                'voipnow_skus.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_skus_vnp360_single_versions(self, method, url, body, headers):
+        """" Request for versions of vnp30 sku"""
+        if method == "GET":
+            body = self.fixures.load(
+                'vnp30_versions.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
