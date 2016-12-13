@@ -631,7 +631,7 @@ class AzureARMNodeDriver(NodeDriver):
         return NodeLocation(
             id=location_data.get('name'),
             name=location_data.get('name'),
-            country=location_data.get('display_name'),
+            country=location_data.get('displayName'),
             driver=self.connection.driver,
             # available_services=data.available_services,
             # virtual_machine_role_sizes=vm_role_sizes

@@ -1,19 +1,18 @@
 import httplib
 import os
 
-import libcloud.resolve
-
+import libcloud.security
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider, NodeState
 from libcloud.test import LibcloudTestCase, MockHttp
 from libcloud.test.file_fixtures import ComputeFileFixtures
 
 
-class AzureNodeDriverTests(LibcloudTestCase):
+class AzureArmNodeDriverTests(LibcloudTestCase):
     #  required otherwise we get client side SSL verification
     libcloud.security.VERIFY_SSL_CERT = False
 
-    SUBSCRIPTION_ID = ''
+    SUBSCRIPTION_ID = '3s42h548_4f8h_948h_3847_663h35u3905h'
     KEY_FILE = os.path.join(os.path.dirname(__file__), 'fixtures/azure/libcloud.pem')
 
     def setUp(self):
@@ -23,18 +22,35 @@ class AzureNodeDriverTests(LibcloudTestCase):
 
     def test_locations_returned_successfully(self):
         locations = self.driver.list_locations()
-        self.assertEqual(len(locations), 7)
-
-        location_names_result = list(a.name for a in locations)
+        self.assertEqual(len(locations), 24)
+        location_names_result = list(a.country for a in locations)
         location_names_expected = [
             'East Asia',
             'Southeast Asia',
+            'Central US',
+            'East US',
+            'East US 2',
+            'West US',
+            'North Central US',
+            'South Central US',
             'North Europe',
             'West Europe',
-            'East US',
-            'North Central US',
-            'West US'
+            'Japan West',
+            'Japan East',
+            'Brazil South',
+            'Australia East',
+            'Australia Southeast',
+            'South India',
+            'Central India',
+            'West India',
+            'Canada Central',
+            'Canada East',
+            'UK South',
+            'UK West',
+            'West Central US',
+            'West US 2'
         ]
+        print(location_names_result)
 
         self.assertListEqual(location_names_result, location_names_expected)
 
