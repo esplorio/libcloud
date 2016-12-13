@@ -32,7 +32,8 @@ except ImportError:
 
 from libcloud.common.types import InvalidCredsError
 from libcloud.common.types import LibcloudError, MalformedResponseError
-from libcloud.common.base import ConnectionUserAndKey, RawResponse, Connection, JsonResponse
+from libcloud.common.base import ConnectionUserAndKey, RawResponse, \
+    Connection, JsonResponse
 from libcloud.common.base import CertificateConnection
 from libcloud.common.base import XmlResponse
 
@@ -577,7 +578,8 @@ class AzureResourceManagerConnection(Connection):
         :param  subscription_id: Azure subscription ID.
         :type   subscription_id: ``str``
 
-        :param  token: JSON web token to authenticate with Azure Active Directory
+        :param  token: JSON web token to authenticate with
+                Azure Active Directory
         :type   token: ``str``
         """
 

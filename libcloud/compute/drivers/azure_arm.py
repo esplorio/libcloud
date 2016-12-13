@@ -20,7 +20,6 @@ MAX_RETRIES = 5
 if sys.version_info < (3,):
     _unicode_type = unicode
 
-
     def _str(value):
         if isinstance(value, unicode):
             return value.encode('utf-8')
@@ -111,14 +110,27 @@ class AzureARMNodeDriver(NodeDriver):
         subscription_id contains the Azure subscription id in the form of GUID
         token is an OAuth 2 token to authenticate with ARM
 
-        Steps to produce a token (won't work straight away on Macs): https://blogs.msdn.microsoft.com/arsen/2015/09/18/certificate-based-auth-with-azure-service-principals-from-linux-command-line/
-        Now to make the above to work with Macs, you'd need to make these changes:
+        Steps to produce a token (won't work straight away on Macs):
+        https://blogs.msdn.microsoft.com/arsen/2015/09/18/certificate-based
+        -auth-with-azure-service-principals-from-linux-command-line/
+        Now to make the above to work with Macs, you'd need to make these
+        changes:
             - The call to generate base64 fingerprint should be:
-            `echo $(openssl x509 -in esplorio-azure-ad-cert.pem -fingerprint -noout) | sed 's/SHA1 Fingerprint=//g' | sed 's/://g' | xxd -r -ps | base64`
-            - Instead of `head`, use `ghead` from `brew install coreutils`, and then do: `tail -n+2 esplorio-azure-ad-cert.pem | ghead -n-1`
+            `echo $(openssl x509 -in esplorio-azure-ad-cert.pem
+                -fingerprint -noout) | sed 's/SHA1 Fingerprint=//g' |
+                    sed 's/://g' | xxd -r -ps | base64`
+            - Instead of `head`, use `ghead` from `brew install coreutils`, and
+                then do: `tail -n+2 esplorio-azure-ad-cert.pem | ghead -n-1`
             - To create the AD app:
-            `azure ad app create --name "esplorio-cli-tools" --home-page "http://esplorio-cli-tools/" --identifier-uris "http://esplorio-cli-tools/"  --key-usage "Verify" --end-date "2020-01-01" --key-value "$(tail -n+2 esplorio-azure-ad-cert.pem | ghead -n-1)"`
-            - Use `-a` option in `azure ad sp create -a <Copy and Paste Application Id GUID Here>`
+            `azure ad app create --name "esplorio-cli-tools"
+                --home-page "http://esplorio-cli-tools/"
+                --identifier-uris "http://esplorio-cli-tools/"
+                --key-usage "Verify"
+                --end-date "2020-01-01"
+                --key-value
+                "$(tail -n+2 esplorio-azure-ad-cert.pem | ghead -n-1)"`
+            - Use `-a` option in `azure ad sp create -a
+                <Copy and Paste Application Id GUID Here>`
             - Command to fetch the Tenant ID: `azure account show`
         """
         self.subscription_id = subscription_id
@@ -177,7 +189,8 @@ class AzureARMNodeDriver(NodeDriver):
             locations = [loc.name for loc in self.list_locations()]
 
         for loc in locations:
-            path = '%sproviders/Microsoft.Compute/locations/%s/publishers' % (self._default_path_prefix, loc)
+            path = '%sproviders/Microsoft.Compute/locations/%s/publishers'\
+                   % (self._default_path_prefix, loc)
             publishers = self.list_publishers(path)
 
             if publisher:
@@ -196,7 +209,8 @@ class AzureARMNodeDriver(NodeDriver):
 
                         for version in versions:
                             os = self.get_os_from_version(version['id'])
-                            azure_image = AzureImage(pub['name'], offer['name'],
+                            azure_image = AzureImage(pub['name'],
+                                                     offer['name'],
                                                      sku['name'], os,
                                                      version['name'], loc,
                                                      self.connection.driver)
@@ -231,7 +245,8 @@ class AzureARMNodeDriver(NodeDriver):
 
     def list_virtual_networks(self):
         json_response = self._perform_get(
-            '%sproviders/Microsoft.Network/virtualnetworks' % self._default_path_prefix,
+            '%sproviders/Microsoft.Network/virtualnetworks' %
+            self._default_path_prefix,
             api_version='2016-03-30')
         raw_data = json_response.parse_body()
         return [self._to_virtual_network(x) for x in raw_data['value']]
@@ -469,7 +484,8 @@ class AzureARMNodeDriver(NodeDriver):
                     node_name, resource_group_name, location)
                 public_ip_address = pip['id']
 
-            payload['properties']['ipConfigurations'][0]['properties']['publicIPAddress'] = {
+            payload['properties']['ipConfigurations'][0]['properties'][
+                'publicIPAddress'] = {
                 'id': public_ip_address
             }
 
@@ -515,7 +531,8 @@ class AzureARMNodeDriver(NodeDriver):
         if state == NodeState.RUNNING:
             raise AssertionError("Node is already running")
         if state == NodeState.STOPPED:
-            raise AssertionError("Node has been deallocated, cannot be rebooted")
+            raise AssertionError("Node has been deallocated, "
+                                 "cannot be rebooted")
 
         path = '%s/restart' % node.id
         json_response = self._perform_post(path, api_version="2015-06-15")
@@ -645,7 +662,8 @@ class AzureARMNodeDriver(NodeDriver):
         )
 
     def _to_virtual_network(self, network_data):
-        snets = [self._to_subnet(x) for x in network_data['properties']['subnets']]
+        snets = [self._to_subnet(x) for x in network_data['properties'][
+            'subnets']]
         return AzureVirtualNetwork(
             id=network_data.get('id'),
             name=network_data.get('name'),

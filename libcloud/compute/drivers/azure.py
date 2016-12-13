@@ -36,7 +36,8 @@ try:
 except ImportError:
     from xml.etree import ElementTree as ET
 
-from libcloud.common.azure import AzureServiceManagementConnection, AZURE_COMPUTE_INSTANCE_TYPES
+from libcloud.common.azure import AzureServiceManagementConnection, \
+    AZURE_COMPUTE_INSTANCE_TYPES
 from libcloud.common.azure import AzureRedirectException
 from libcloud.compute.providers import Provider
 from libcloud.compute.base import Node, NodeDriver, NodeLocation, NodeSize
@@ -1356,7 +1357,8 @@ class AzureNodeDriver(NodeDriver):
         respbody = response.body
 
         # WARNING: HACK
-        # Special case for PublicIPs, because somehow it is named completely differently from the rest
+        # Special case for PublicIPs, because somehow it is named
+        # completely differently from the rest
         respbody = respbody.replace('PublicIPs', 'PublicIps')
 
         doc = minidom.parseString(respbody)
