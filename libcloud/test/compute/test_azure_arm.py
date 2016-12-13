@@ -77,6 +77,12 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
     def test_list_nodes_with_wrong_resource_group(self):
         self.assertRaises(AssertionError, self.driver.list_nodes, 'fakegroup')
 
+    def test_list_images(self):
+        vmimages = self.driver.list_images(location='brazilsouth')
+        vmimage = vmimages[0]
+        self.assertEqual(vmimage.id, '4psa:voipnow:vnp360-single:Linux:3.6.0')
+        self.assertEqual(vmimage.name, '4psa voipnow vnp360-single Linux 3.6.0')
+        self.assertEqual(vmimage.location, 'brazilsouth')
 
     def test_create_node_and_deployment_one_node(self):
         raise NotImplementedError
@@ -145,35 +151,44 @@ class AzureArmMockHttp(MockHttp):
     def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers(self, method, url, body, headers):
         """ A request for the publishers in south brazil (only one is returned out of many possible due to tests """
         if method == "GET":
-            body = self.fixures.load(
-                'brazil_south_publishers.json'
+            body = self.fixtures.load(
+                'brazil_south_publishers'
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
 
-    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow(self, method, url, body, headers):
+    def _Subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_Providers_Microsoft_Compute_Locations_brazilsouth_Publishers_4psa_artifacttypes_vmimage_offers(self, method, url, body, headers):
         """" Request for offers from the publisher 4psa"""
         if method == "GET":
-            body = self.fixures.load(
-                '4psa_offers.json'
+            body = self.fixtures.load(
+                '4psa_offers'
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
 
-    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_skus(self, method, url, body, headers):
+    def _Subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_Providers_Microsoft_Compute_Locations_brazilsouth_Publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_skus(self, method, url, body, headers):
         """ Request for skus for voipnow"""
         if method == "GET":
-            body = self.fixures.load(
+            body = self.fixtures.load(
                 'voipnow_skus.json'
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
 
-    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_skus_vnp360_single_versions(self, method, url, body, headers):
+    def _Subscriptions_Providers_Microsoft_Compute_Locations_brazilsouth_Publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_Skus_vnp360_single_versions(self, method, url, body, headers):
         """" Request for versions of vnp30 sku"""
         if method == "GET":
-            body = self.fixures.load(
+            body = self.fixtures.load(
                 'vnp30_versions.json'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _Subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_Providers_Microsoft_Compute_Locations_brazilsouth_Publishers_4psa_ArtifactTypes_VMImage_Offers_voipnow_Skus_vnp360_single_Versions_3_6_0(self, method, url, body, headers):
+        """" Request for version 3.6.0"""
+        if method == "GET":
+            body = self.fixtures.load(
+                'vnp30_version_3'
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]

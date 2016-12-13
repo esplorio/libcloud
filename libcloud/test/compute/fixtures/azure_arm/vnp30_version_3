@@ -1,0 +1,16 @@
+{
+  "properties": {
+    "plan": {
+      "publisher": "4psa",
+      "name": "vnp360-single",
+      "product": "voipnow"
+    },
+    "osDiskImage": {
+      "operatingSystem": "Linux"
+    },
+    "dataDiskImages": []
+  },
+  "location": "brazilsouth",
+  "name": "3.6.0",
+  "id": "/Subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/Providers/Microsoft.Compute/Locations/brazilsouth/Publishers/4psa/ArtifactTypes/VMImage/Offers/voipnow/Skus/vnp360-single/Versions/3.6.0"
+}
