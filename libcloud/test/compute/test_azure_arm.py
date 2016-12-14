@@ -84,6 +84,13 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
         self.assertEqual(vmimage.name, '4psa voipnow vnp360-single Linux 3.6.0')
         self.assertEqual(vmimage.location, 'brazilsouth')
 
+    def test_list_sizes(self):
+        vmsizes = self.driver.list_sizes(location='brazilsouth')
+        vmsize = vmsizes[0]
+        self.assertEqual('Standard_A0', vmsize.name)
+        self.assertEqual(58, len(vmsizes))
+
+
     def test_create_node_and_deployment_one_node(self):
         raise NotImplementedError
 
@@ -189,6 +196,15 @@ class AzureArmMockHttp(MockHttp):
         if method == "GET":
             body = self.fixtures.load(
                 'vnp30_version_3'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Compute_locations_brazilsouth_vmSizes(self, method, url, body, headers):
+        """ Request for all the vmSizes in brazil south"""
+        if method == "GET":
+            body = self.fixtures.load(
+                'brazil_south_vm_sizes'
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]
