@@ -1,0 +1,39 @@
+{
+  "value": [
+    {
+      "name": "user-brazi-40wudhabjn7g-vnet",
+      "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/virtualNetworks/user-brazi-40wudhabjn7g-vnet",
+      "etag": "W/sfsfdfd-6a60-4406-b0cd-sfsfs",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "brazilsouth",
+      "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "2349067g-c235-4eg8-83b5-sdfehe23df90",
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": []
+        },
+        "subnets": [
+          {
+            "name": "denva-brazi-40gpoqeyjn7g-snet",
+            "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/virtualNetworks/user-brazi-40wudhabjn7g-vnet/subnets/user-brazi-40wudhabjn7g-snet",
+            "etag": "W/dsdsdsd-6a60-adaa-b0cd-5a199e2cffa9",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "addressPrefix": "10.0.1.0/24",
+              "ipConfigurations": [
+                {
+                  "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic/ipConfigurations/ipconfig1472384756473"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

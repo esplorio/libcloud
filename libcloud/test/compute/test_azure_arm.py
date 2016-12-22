@@ -1,6 +1,7 @@
 import os
 
 import libcloud.security
+from libcloud.compute.drivers.azure_arm import AzureNetworkConfig
 from libcloud.compute.providers import get_driver
 from libcloud.compute.types import Provider, NodeState
 from libcloud.test import LibcloudTestCase, MockHttp
@@ -92,7 +93,33 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
 
 
     def test_create_node_and_deployment_one_node(self):
-        raise NotImplementedError
+        # Create a network config
+        virtual_networks = self.driver.ex_list_virtual_networks()
+        virtual_network = virtual_networks[0]
+
+        locations = self.driver.list_locations()
+        loc = locations[12]
+
+        vmimages = self.driver.list_images(location='brazilsouth')
+        vmimage = vmimages[0]
+
+        subnets = virtual_network.snets
+        subnet = subnets[0]
+
+        vmsizes = self.driver.list_sizes(location='brazilsouth')
+        vmsize = vmsizes[0]
+
+        ex_network_config = AzureNetworkConfig(virtual_network, subnet, False)
+
+        # Create the node with the above ex_network_config
+        node = self.driver.create_node('user-brazi-40wudhabjn7g', loc, vmsize,
+                                  ex_resource_group_name='myapp',
+                                  ex_storage_account_name="default_storage_acc_name",
+                                  ex_network_config=ex_network_config,
+                                  ex_admin_username="default_user_name",
+                                  ex_marketplace_image=vmimage)
+
+        raise AssertionError(node)
 
     def test_create_node_and_deployment_second_node(self):
         raise NotImplementedError
@@ -205,6 +232,23 @@ class AzureArmMockHttp(MockHttp):
         if method == "GET":
             body = self.fixtures.load(
                 'brazil_south_vm_sizes'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_providers_Microsoft_Network_virtualnetworks(self, method, url, body, headers):
+        """ Request for virtual networks"""
+        if method == "GET":
+            body = self.fixtures.load(
+                'brazil_south_virtual_networks'
+            )
+
+        return httplib.OK, body, headers, httplib.responses[httplib.OK]
+
+    def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Compute_virtualMachines_user_brazi_40wudhabjn7g(self, method, url, body, headers):
+        if method == "PUT":
+            body = self.fixtures.load(
+                'create_myvm'
             )
 
         return httplib.OK, body, headers, httplib.responses[httplib.OK]

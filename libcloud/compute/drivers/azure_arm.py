@@ -284,6 +284,8 @@ class AzureARMNodeDriver(NodeDriver):
             'location': location.id,
         }
 
+        raise AssertionError(nic)
+
         os_disk_name = '%s-os-disk' % name
 
         node_payload['properties'] = {
@@ -534,6 +536,7 @@ class AzureARMNodeDriver(NodeDriver):
                'networkInterfaces/%s' % \
                (self._default_path_prefix, resource_group_name, nic_name)
         output = self._perform_put(path, payload)
+
         return output.parse_body()
 
     def _create_public_ip_address(self, node_name, resource_group_name,
