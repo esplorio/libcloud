@@ -1,59 +1,59 @@
 
 {
-   'id':'/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Compute/virtualMachines/user-brazi-40wudhabjn7g',
-   'type':'Microsoft.Compute/virtualMachines',
-   'properties':{
-      'osProfile':{
-         'adminUsername':'default_user_name',
-         'computerName':'user-brazi-40wudhabjn7g',
-         'linuxConfiguration':{
-            'ssh':{
-               'publicKeys':[
+   "id":"/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Compute/virtualMachines/user-brazi-40wudhabjn7g",
+   "type":"Microsoft.Compute/virtualMachines",
+   "properties":{
+      "osProfile":{
+         "adminUsername":"default_user_name",
+         "computerName":"user-brazi-40wudhabjn7g",
+         "linuxConfiguration":{
+            "ssh":{
+               "publicKeys":[
                   {
-                     'path':'/home/ubuntu/.ssh/authorized_keys',
-                     'keyData':'<secret>'
+                     "path":"/home/ubuntu/.ssh/authorized_keys",
+                     "keyData":"<secret>"
                   }
                ]
-            },
+            }
          }
       },
-      'networkProfile':{
-         'networkInterfaces':[
+      "networkProfile":{
+         "networkInterfaces":[
             {
                 "id": "/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/resourceGroups/myapp/providers/Microsoft.Network/networkInterfaces/user-brazi-40wudhabjn7g-nic",
-               'properties':{
-                  'primary':True
+               "properties":{
+                  "primary":"True"
                }
             }
          ]
       },
-      'storageProfile':{
-         'imageReference':{
-            'sku':'vnp360-single',
-            'publisher':'4psa',
-            'version':'3.6.0',
-            'offer':'voipnow'
+      "storageProfile":{
+         "imageReference":{
+            "sku":"vnp360-single",
+            "publisher":"4psa",
+            "version":"3.6.0",
+            "offer":"voipnow"
          },
-         'osDisk':{
-            'name':'myvm-os-disk',
-            'diskSizeGB':50,
-            'caching':'ReadWrite',
-            'createOption':'FromImage',
-            'osType':'Linux',
-            'vhd':{
-               'uri':'test.uri'
+         "osDisk":{
+            "name":"myvm-os-disk",
+            "diskSizeGB":50,
+            "caching":"ReadWrite",
+            "createOption":"FromImage",
+            "osType":"Linux",
+            "vhd":{
+               "uri":"test.uri"
             }
          },
-         'dataDisks':[
+         "dataDisks":[
 
          ]
       },
-      'vmId':'test-vm-id',
-      'hardwareProfile':{
-         'vmSize':'Standard_A0'
+      "vmId":"test-vm-id",
+      "hardwareProfile":{
+         "vmSize":"Standard_A0"
       },
-      'provisioningState':'Creating'
+      "provisioningState":"Creating"
    },
-   'name':'user-brazi-40wudhabjn7g',
-   'location':'southbrazil'
+   "name":"user-brazi-40wudhabjn7g",
+   "location":"southbrazil"
 }

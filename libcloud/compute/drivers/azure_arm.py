@@ -284,8 +284,6 @@ class AzureARMNodeDriver(NodeDriver):
             'location': location.id,
         }
 
-        raise AssertionError(nic)
-
         os_disk_name = '%s-os-disk' % name
 
         node_payload['properties'] = {

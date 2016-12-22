@@ -119,7 +119,7 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
                                   ex_admin_username="default_user_name",
                                   ex_marketplace_image=vmimage)
 
-        raise AssertionError(node)
+        self.assertEqual('user-brazi-40wudhabjn7g', node.name)
 
     def test_create_node_and_deployment_second_node(self):
         raise NotImplementedError
@@ -166,7 +166,7 @@ class AzureArmMockHttp(MockHttp):
 
     def _subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Network_networkInterfaces_user_brazi_40wudhabjn7g_nic(self, method, url, body, headers):
         """ A request for the network interface card information about vm1"""
-        if method == "GET":
+        if method == "GET" or method == "PUT":
             body = self.fixtures.load(
                 '_subscriptions_3s42h548_4f8h_948h_3847_663h35u3905h_resourceGroups_myapp_providers_Microsoft_Network_networkInterfaces_user_brazi_40wudhabjn7g_nic.json'
             )
