@@ -388,7 +388,7 @@ class AzureARMNodeDriver(NodeDriver):
         :return: True if the reboot was successful, otherwise False
         :rtype: ``bool``
         """
-        state = self.ex_get_state_of_node(Node)
+        state = self.ex_get_state_of_node(node)
         if state == NodeState.RUNNING:
             raise AssertionError("Node is already running")
         if state == NodeState.STOPPED:
@@ -582,7 +582,7 @@ class AzureARMNodeDriver(NodeDriver):
             else NodeState.PENDING
 
         return Node(
-            id=node_data.get('name'),
+            id=node_data.get('id'),
             name=node_data.get('name'),
             state=node_state,
             public_ips=public_ips,

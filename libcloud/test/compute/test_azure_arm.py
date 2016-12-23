@@ -59,8 +59,10 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
         vmimages = self.driver.list_nodes('myapp')
         self.assertEqual(len(vmimages), 1)
         vmimage = vmimages[0]
-        self.assertEqual("myvm", vmimage.id)
-        self.assertEqual("myvm", vmimage.id)
+        self.assertEqual("myvm", vmimage.name)
+        self.assertEqual('/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/'
+                         'resourceGroups/myapp/providers/Microsoft.Compute/'
+                         'virtualMachines/myvm', vmimage.id)
         self.assertEqual(NodeState.RUNNING, vmimage.state)
         self.assertEqual(["1.1.1.1"], vmimage.public_ips)
         self.assertEqual(["10.1.1.1"], vmimage.private_ips)
@@ -69,8 +71,10 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
         vmimages = self.driver.list_nodes()
         self.assertEqual(len(vmimages), 1)
         vmimage = vmimages[0]
-        self.assertEqual("myvm", vmimage.id)
-        self.assertEqual("myvm", vmimage.id)
+        self.assertEqual("myvm", vmimage.name)
+        self.assertEqual('/subscriptions/3s42h548-4f8h-948h-3847-663h35u3905h/'
+                         'resourceGroups/myapp/providers/Microsoft.Compute/'
+                         'virtualMachines/myvm', vmimage.id)
         self.assertEqual(NodeState.RUNNING, vmimage.state)
         self.assertEqual(["1.1.1.1"], vmimage.public_ips)
         self.assertEqual(["10.1.1.1"], vmimage.private_ips)
