@@ -158,7 +158,7 @@ class AzureARMNodeDriver(NodeDriver):
         json_response = self._perform_get(path, api_version='2016-03-30')
         raw_data = json_response.parse_body()
         if (int(json_response.status)) != 200:
-            raise AssertionError('%s' %raw_data['error']['message'] )
+            raise AssertionError('%s' % raw_data['error']['message'] )
         return [self._to_node(x) for x in raw_data['value']]
 
     def list_sizes(self, location):
@@ -370,7 +370,7 @@ class AzureARMNodeDriver(NodeDriver):
             raise Exception('Error encountered: %s' % output['error'])
 
         return Node(
-            id=name,
+            id=output['id'],
             name=name,
             state=NodeState.PENDING,
             public_ips=[],
