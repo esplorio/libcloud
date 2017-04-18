@@ -125,12 +125,6 @@ class AzureArmNodeDriverTests(LibcloudTestCase):
 
         self.assertEqual('user-brazi-40wudhabjn7g', node.name)
 
-    def test_create_node_and_deployment_second_node(self):
-        raise NotImplementedError
-
-    def test_create_node_and_deployment_second_node_307_response(self):
-        raise NotImplementedError
-
 class AzureArmMockHttp(MockHttp):
 
     fixtures = ComputeFileFixtures('azure_arm')
