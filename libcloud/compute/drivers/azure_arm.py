@@ -184,12 +184,11 @@ class AzureARMNodeDriver(NodeDriver):
 
     def create_node(self, name, location, node_size,
                     ex_resource_group_name,
-                    ex_storage_account_name,
                     ex_network_config,
                     ex_admin_username,
                     ex_marketplace_image,
-                    ex_os_disk_size=30,
-                    ex_data_disk_size=None,
+                    ex_os_disk,
+                    ex_data_disks=None,
                     ex_availability_set=None,
                     ex_public_ip_address=None,
                     ex_public_key=None):
@@ -241,16 +240,16 @@ class AzureARMNodeDriver(NodeDriver):
                      OS disk.
         :type        ex_marketplace_image: `AzureImage`
 
-        :keyword     ex_os_disk_size: Optional.
-                     The size of the OS disk to be attached in GB. Defaults to
-                     30
-        :type        ex_os_disk_size: `int`
+        :keyword     ex_os_disk: a dictionary containing the desired OS Disk
+                     config including the storage account (`account`) and the
+                     size in GB (`size`)
+        :type        ex_os_disk: `dict`
 
-        :keyword     ex_data_disk_size: Optional.
-                     The size of the data disk to be attached in GB. Will not
-                     be created
-                     if passed nothing
-        :type        ex_data_disk_size: `int`
+        :keyword     ex_data_disks: Optional.
+                     A list of dictionaries containing the desired data disk
+                     config including the storage profile (`profile`) and the
+                     (`size`)
+        :type        ex_data_disks: `list`
 
         :keyword     ex_availability_set: Optional.
                      The availability set that the node lives in
@@ -296,11 +295,11 @@ class AzureARMNodeDriver(NodeDriver):
                     'name': os_disk_name,
                     'vhd': {
                         'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
-                               (ex_storage_account_name, os_disk_name)
+                               (ex_os_disk['account'], os_disk_name)
                     },
                     'caching': 'ReadWrite',
                     'createOption': 'fromImage',
-                    'diskSizeGB': ex_os_disk_size
+                    'diskSizeGB': ex_os_disk['size']
                 }
             },
             'osProfile': {
@@ -331,22 +330,23 @@ class AzureARMNodeDriver(NodeDriver):
             }
         }
 
-        if ex_data_disk_size:
-            data_disk_name = '%s-data-disk' % name
-            # Attach an empty data disk if value this is given
-            node_payload['properties']['storageProfile']['dataDisks'] = [
-                {
-                    'name': data_disk_name,
-                    'diskSizeGB': ex_data_disk_size,
-                    'lun': 0,
-                    'vhd': {
-                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
-                               (ex_storage_account_name, data_disk_name)
-                    },
-                    'caching': 'ReadWrite',
-                    'createOption': 'empty'
-                }
-            ]
+        if ex_data_disks:
+            for i, disk in enumerate(ex_data_disks):
+                data_disk_name = '%s-data-disk-%d' % (name, i)
+                # Attach an empty data disk if value this is given
+                node_payload['properties']['storageProfile']['dataDisks'] = [
+                    {
+                        'name': data_disk_name,
+                        'diskSizeGB': disk['size'],
+                        'lun': 0,
+                        'vhd': {
+                            'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
+                                   (disk['account'], data_disk_name)
+                        },
+                        'caching': 'ReadWrite',
+                        'createOption': 'empty'
+                    }
+                ]
 
         if ex_availability_set:
             availability_set_id = \
