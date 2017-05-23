@@ -220,11 +220,6 @@ class AzureARMNodeDriver(NodeDriver):
                      The name of the resource group the node belongs to
         :type        ex_resource_group_name: `str`
 
-        :keyword     ex_storage_account_name: Required.
-                     The name of the storage account the disks on the node
-                                              belongs to
-        :type        ex_storage_account_name: `str`
-
         :keyword     ex_network_config: Required
                      Class holds the network information needed to create a
                      a node e.g. the virtual network and subnet the node is
