@@ -326,22 +326,23 @@ class AzureARMNodeDriver(NodeDriver):
         }
 
         if ex_data_disks:
+            data_disks = []
             for i, disk in enumerate(ex_data_disks):
                 data_disk_name = '%s-data-disk-%d' % (name, i)
                 # Attach an empty data disk if value this is given
-                node_payload['properties']['storageProfile']['dataDisks'] = [
-                    {
-                        'name': data_disk_name,
-                        'diskSizeGB': disk['size'],
-                        'lun': 0,
-                        'vhd': {
-                            'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
-                                   (disk['account'], data_disk_name)
-                        },
-                        'caching': 'ReadWrite',
-                        'createOption': 'empty'
-                    }
-                ]
+                data_disks.append({
+                    'name': data_disk_name,
+                    'diskSizeGB': disk['size'],
+                    'lun': 0,
+                    'vhd': {
+                        'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
+                               (disk['account'], data_disk_name)
+                    },
+                    'caching': 'ReadWrite',
+                    'createOption': 'empty'
+                })
+
+            node_payload['properties']['storageProfile']['dataDisks'] = data_disks
 
         if ex_availability_set:
             availability_set_id = \
