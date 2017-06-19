@@ -333,7 +333,7 @@ class AzureARMNodeDriver(NodeDriver):
                 data_disks.append({
                     'name': data_disk_name,
                     'diskSizeGB': disk['size'],
-                    'lun': 0,
+                    'lun': i,
                     'vhd': {
                         'uri': 'http://%s.blob.core.windows.net/vhds/%s.vhd' %
                                (disk['account'], data_disk_name)
