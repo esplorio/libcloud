@@ -24,38 +24,45 @@ try:
 except ImportError:
     have_paramiko = False
 
+import libcloud
 from libcloud import _init_once
-from libcloud.common.base import LoggingHTTPConnection
-from libcloud.common.base import LoggingHTTPSConnection
-
+from libcloud.utils.loggingconnection import LoggingConnection
+from libcloud.base import DriverTypeNotFoundError
 from libcloud.test import unittest
 
 
 class TestUtils(unittest.TestCase):
     def test_init_once_and_debug_mode(self):
+        if have_paramiko:
+            paramiko_logger = paramiko.util.logging.getLogger()
+            paramiko_logger.setLevel(logging.NOTSET)
+
         # Debug mode is disabled
         _init_once()
 
-        self.assertEqual(LoggingHTTPConnection.log, None)
-        self.assertEqual(LoggingHTTPSConnection.log, None)
+        self.assertEqual(LoggingConnection.log, None)
 
         if have_paramiko:
-            logger = paramiko.util.logging.getLogger()
-            paramiko_log_level = logger.getEffectiveLevel()
-            self.assertEqual(paramiko_log_level, logging.WARNING)
+            paramiko_log_level = paramiko_logger.getEffectiveLevel()
+            self.assertEqual(paramiko_log_level, logging.NOTSET)
 
         # Enable debug mode
         os.environ['LIBCLOUD_DEBUG'] = '/dev/null'
         _init_once()
 
-        self.assertTrue(LoggingHTTPConnection.log is not None)
-        self.assertTrue(LoggingHTTPSConnection.log is not None)
+        self.assertTrue(LoggingConnection.log is not None)
 
         if have_paramiko:
-            logger = paramiko.util.logging.getLogger()
-            paramiko_log_level = logger.getEffectiveLevel()
+            paramiko_log_level = paramiko_logger.getEffectiveLevel()
             self.assertEqual(paramiko_log_level, logging.DEBUG)
 
+    def test_factory(self):
+        driver = libcloud.get_driver(libcloud.DriverType.COMPUTE, libcloud.DriverType.COMPUTE.EC2)
+        self.assertEqual(driver.__name__, 'EC2NodeDriver')
+
+    def test_raises_error(self):
+        with self.assertRaises(DriverTypeNotFoundError):
+            libcloud.get_driver('potato', 'potato')
 
 if __name__ == '__main__':
     sys.exit(unittest.main())

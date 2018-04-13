@@ -17,6 +17,7 @@ import base64
 import datetime
 import shlex
 import re
+import os
 
 try:
     import simplejson as json
@@ -27,6 +28,7 @@ from libcloud.utils.py3 import httplib
 from libcloud.utils.py3 import b
 
 from libcloud.common.base import JsonResponse, ConnectionUserAndKey
+from libcloud.common.base import KeyCertificateConnection
 from libcloud.common.types import InvalidCredsError
 
 from libcloud.container.base import (Container, ContainerDriver,
@@ -54,7 +56,12 @@ class DockerResponse(JsonResponse):
             # an error, but response status could still be 200
             content_type = self.headers.get('content-type', 'application/json')
             if content_type == 'application/json' or content_type == '':
-                body = json.loads(self.body)
+                if self.headers.get('transfer-encoding') == 'chunked' and \
+                        'fromImage' in self.request.url:
+                    body = [json.loads(chunk) for chunk in
+                            self.body.strip().replace('\r', '').split('\n')]
+                else:
+                    body = json.loads(self.body)
             else:
                 body = self.body
         except ValueError:
@@ -108,6 +115,47 @@ class DockerConnection(ConnectionUserAndKey):
         return headers
 
 
+class DockertlsConnection(KeyCertificateConnection):
+
+    responseCls = DockerResponse
+
+    def __init__(self, key, secret, secure=True,
+                 host='localhost',
+                 port=4243, key_file='', cert_file='', **kwargs):
+
+        super(DockertlsConnection, self).__init__(key_file=key_file,
+                                                  cert_file=cert_file,
+                                                  secure=secure, host=host,
+                                                  port=port, url=None,
+                                                  proxy_url=None,
+                                                  timeout=None, backoff=None,
+                                                  retry_delay=None)
+        if key_file:
+            keypath = os.path.expanduser(key_file)
+            is_file_path = os.path.exists(keypath) and os.path.isfile(keypath)
+            if not is_file_path:
+                raise InvalidCredsError(
+                    'You need an key PEM file to authenticate with '
+                    'Docker tls. This can be found in the server.'
+                )
+            self.key_file = key_file
+
+            certpath = os.path.expanduser(cert_file)
+            is_file_path = os.path.exists(
+                certpath) and os.path.isfile(certpath)
+            if not is_file_path:
+                raise InvalidCredsError(
+                    'You need an certificate PEM file to authenticate with '
+                    'Docker tls. This can be found in the server.'
+                )
+            self.cert_file = cert_file
+
+    def add_default_headers(self, headers):
+
+        headers['Content-Type'] = 'application/json'
+        return headers
+
+
 class DockerContainerDriver(ContainerDriver):
     """
     Docker container driver class.
@@ -132,7 +180,7 @@ class DockerContainerDriver(ContainerDriver):
     supports_clusters = False
     version = '1.24'
 
-    def __init__(self, key=None, secret=None, secure=False, host='localhost',
+    def __init__(self, key='', secret='', secure=False, host='localhost',
                  port=4243, key_file=None, cert_file=None):
         """
         :param    key: API key or username to used (required)
@@ -159,11 +207,12 @@ class DockerContainerDriver(ContainerDriver):
 
         :return: ``None``
         """
-        super(DockerContainerDriver, self).__init__(key=key, secret=secret,
-                                                    secure=secure, host=host,
-                                                    port=port,
-                                                    key_file=key_file,
-                                                    cert_file=cert_file)
+        if key_file:
+            self.connectionCls = DockertlsConnection
+            self.key_file = key_file
+            self.cert_file = cert_file
+            secure = True
+
         if host.startswith('https://'):
             secure = True
 
@@ -172,6 +221,12 @@ class DockerContainerDriver(ContainerDriver):
         for prefix in prefixes:
             if host.startswith(prefix):
                 host = host.strip(prefix)
+
+        super(DockerContainerDriver, self).__init__(key=key, secret=secret,
+                                                    secure=secure, host=host,
+                                                    port=port,
+                                                    key_file=key_file,
+                                                    cert_file=cert_file)
 
         if key_file or cert_file:
             # docker tls authentication-
@@ -183,14 +238,20 @@ class DockerContainerDriver(ContainerDriver):
                 raise Exception(
                     'Needs both private key file and '
                     'certificate file for tls authentication')
-            self.connection.key_file = key_file
-            self.connection.cert_file = cert_file
-            self.connection.secure = True
-        else:
-            self.connection.secure = secure
 
+        self.connection.secure = secure
         self.connection.host = host
         self.connection.port = port
+        # set API version
+        self.version = self._get_api_version()
+
+    def _ex_connection_class_kwargs(self):
+        kwargs = {}
+        if hasattr(self, 'key_file'):
+            kwargs['key_file'] = self.key_file
+        if hasattr(self, 'cert_file'):
+            kwargs['cert_file'] = self.cert_file
+        return kwargs
 
     def install_image(self, path):
         """
@@ -205,19 +266,25 @@ class DockerContainerDriver(ContainerDriver):
         }
         data = json.dumps(payload)
 
-        result = self.connection.request('v%s/images/create?fromImage=%s' %
+        result = self.connection.request('/v%s/images/create?fromImage=%s' %
                                          (self.version, path), data=data,
                                          method='POST')
         if "errorDetail" in result.body:
             raise DockerException(None, result.body)
-        try:
-            # get image id
-            image_id = re.findall(
-                r'{"status":"Download complete"'
-                r',"progressDetail":{},"id":"\w+"}',
-                result.body)[-1]
-            image_id = json.loads(image_id).get('id')
-        except:
+        image_id = None
+
+        # the response is slightly different if the image is already present
+        # and it's not downloaded. both messages below indicate that the image
+        # is available for use to the daemon
+        if re.search(r'Downloaded newer image', result.body) or \
+                re.search(r'"Status: Image is up to date', result.body):
+            if re.search(r'sha256:(?P<id>[a-z0-9]{64})', result.body):
+                image_id = re.findall(r'sha256:(?P<id>[a-z0-9]{64})',
+                                      result.body)[-1]
+
+        # if there is a failure message or if there is not an image id in the
+        # response then throw an exception.
+        if image_id is None:
             raise DockerException(None, 'failed to install image')
 
         image = ContainerImage(
@@ -235,7 +302,7 @@ class DockerContainerDriver(ContainerDriver):
 
         :rtype: ``list`` of :class:`libcloud.container.base.ContainerImage`
         """
-        result = self.connection.request('v%s/images/json' %
+        result = self.connection.request('/v%s/images/json' %
                                          (self.version)).object
         images = []
         for image in result:
@@ -276,7 +343,7 @@ class DockerContainerDriver(ContainerDriver):
             ex = ''
         try:
             result = self.connection.request(
-                "v%s/containers/json%s" % (self.version, ex)).object
+                "/v%s/containers/json%s" % (self.version, ex)).object
         except Exception as exc:
             errno = getattr(exc, 'errno', None)
             if errno == 111:
@@ -355,7 +422,7 @@ class DockerContainerDriver(ContainerDriver):
 
         data = json.dumps(payload)
         try:
-            result = self.connection.request('v%s/containers/create'
+            result = self.connection.request('/v%s/containers/create'
                                              % (self.version),
                                              data=data,
                                              params=params, method='POST')
@@ -376,10 +443,16 @@ class DockerContainerDriver(ContainerDriver):
 
         data = json.dumps(payload)
         if start:
-            result = self.connection.request(
-                'v%s/containers/%s/start' %
-                (self.version, id_), data=data,
-                method='POST')
+            if float(self._get_api_version()) > 1.22:
+                result = self.connection.request(
+                    '/v%s/containers/%s/start' %
+                    (self.version, id_),
+                    method='POST')
+            else:
+                result = self.connection.request(
+                    '/v%s/containers/%s/start' %
+                    (self.version, id_), data=data,
+                    method='POST')
 
         return self.get_container(id_)
 
@@ -392,7 +465,7 @@ class DockerContainerDriver(ContainerDriver):
 
         :rtype: :class:`libcloud.container.base.Container`
         """
-        result = self.connection.request("v%s/containers/%s/json" %
+        result = self.connection.request("/v%s/containers/%s/json" %
                                          (self.version, id)).object
 
         return self._to_container(result)
@@ -407,15 +480,22 @@ class DockerContainerDriver(ContainerDriver):
         :return: The container refreshed with current data
         :rtype: :class:`libcloud.container.base.Container`
         """
-        payload = {
-            'Binds': [],
-            'PublishAllPorts': True,
-        }
-        data = json.dumps(payload)
-        result = self.connection.request(
-            'v%s/containers/%s/start' %
-            (self.version, container.id),
-            method='POST', data=data)
+        if float(self._get_api_version()) > 1.22:
+            result = self.connection.request(
+                '/v%s/containers/%s/start' %
+                (self.version, container.id),
+                method='POST')
+        else:
+            payload = {
+                'Binds': [],
+                'PublishAllPorts': True,
+            }
+            data = json.dumps(payload)
+            result = self.connection.request(
+                '/v%s/containers/%s/start' %
+                (self.version, container.id),
+                method='POST', data=data)
+
         if result.status in VALID_RESPONSE_CODES:
             return self.get_container(container.id)
         else:
@@ -432,7 +512,7 @@ class DockerContainerDriver(ContainerDriver):
         :return: The container refreshed with current data
         :rtype: :class:`libcloud.container.base.Container`
         """
-        result = self.connection.request('v%s/containers/%s/stop' %
+        result = self.connection.request('/v%s/containers/%s/stop' %
                                          (self.version, container.id),
                                          method='POST')
         if result.status in VALID_RESPONSE_CODES:
@@ -453,7 +533,7 @@ class DockerContainerDriver(ContainerDriver):
         """
         data = json.dumps({'t': 10})
         # number of seconds to wait before killing the container
-        result = self.connection.request('v%s/containers/%s/restart' %
+        result = self.connection.request('/v%s/containers/%s/restart' %
                                          (self.version, container.id),
                                          data=data, method='POST')
         if result.status in VALID_RESPONSE_CODES:
@@ -472,8 +552,8 @@ class DockerContainerDriver(ContainerDriver):
         :return: True if the destroy was successful, False otherwise.
         :rtype: ``bool``
         """
-        result = self.connection.request('v%s/containers/%s' % (self.version,
-                                                                container.id),
+        result = self.connection.request('/v%s/containers/%s' % (self.version,
+                                                                 container.id),
                                          method='DELETE')
         return result.status in VALID_RESPONSE_CODES
 
@@ -486,7 +566,7 @@ class DockerContainerDriver(ContainerDriver):
 
         :rtype: ``str``
         """
-        result = self.connection.request("v%s/containers/%s/top" %
+        result = self.connection.request("/v%s/containers/%s/top" %
                                          (self.version, container.id)).object
 
         return result
@@ -503,7 +583,7 @@ class DockerContainerDriver(ContainerDriver):
 
         :rtype: :class:`libcloud.container.base.Container`
         """
-        result = self.connection.request('v%s/containers/%s/rename?name=%s'
+        result = self.connection.request('/v%s/containers/%s/rename?name=%s'
                                          % (self.version, container.id, name),
                                          method='POST')
         if result.status in VALID_RESPONSE_CODES:
@@ -530,13 +610,13 @@ class DockerContainerDriver(ContainerDriver):
 
         if float(self._get_api_version()) > 1.10:
             result = self.connection.request(
-                "v%s/containers/%s/logs?follow=%s&stdout=1&stderr=1" %
+                "/v%s/containers/%s/logs?follow=%s&stdout=1&stderr=1" %
                 (self.version, container.id, str(stream))).object
             logs = result
         else:
             result = self.connection.request(
-                "v%s/containers/%s/attach?logs=1&stream=%s&stdout=1&stderr=1" %
-                (self.version, container.id, str(stream)),
+                "/v%s/containers/%s/attach?logs=1&stream=%s&stdout=1&stderr=1"
+                % (self.version, container.id, str(stream)),
                 method='POST',
                 data=data)
             logs = result.body
@@ -560,7 +640,7 @@ class DockerContainerDriver(ContainerDriver):
         """
 
         term = term.replace(' ', '+')
-        result = self.connection.request('v%s/images/search?term=%s' %
+        result = self.connection.request('/v%s/images/search?term=%s' %
                                          (self.version, term)).object
         images = []
         for image in result:
@@ -591,8 +671,8 @@ class DockerContainerDriver(ContainerDriver):
 
         :rtype: ``bool``
         """
-        result = self.connection.request('v%s/images/%s' % (self.version,
-                                                            image.name),
+        result = self.connection.request('/v%s/images/%s' % (self.version,
+                                                             image.name),
                                          method='DELETE')
         return result.status in VALID_RESPONSE_CODES
 
@@ -618,6 +698,8 @@ class DockerContainerDriver(ContainerDriver):
         if 'Exited' in status:
             state = ContainerState.STOPPED
         elif status.startswith('Up '):
+            state = ContainerState.RUNNING
+        elif 'running' in status:
             state = ContainerState.RUNNING
         else:
             state = ContainerState.STOPPED

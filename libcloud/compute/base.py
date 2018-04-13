@@ -64,6 +64,7 @@ __all__ = [
     'NodeState',
     'NodeSize',
     'NodeImage',
+    'NodeImageMember',
     'NodeLocation',
     'NodeAuthSSHKey',
     'NodeAuthPassword',
@@ -383,6 +384,57 @@ class NodeImage(UuidMixin):
                 % (self.id, self.name, self.driver.name))
 
 
+class NodeImageMember(UuidMixin):
+    """
+    A member of an image. At some cloud providers there is a mechanism
+    to share images. Once an image is shared with another account that
+    user will be a 'member' of the image.
+
+    For example, see the image members schema in the OpenStack Image
+    Service API v2 documentation. https://developer.openstack.org/
+    api-ref/image/v2/index.html#image-members-schema
+
+    NodeImageMember objects are typically returned by the driver for the
+    cloud provider in response to the list_image_members method
+    """
+
+    def __init__(self, id, image_id, state, driver, created=None, extra=None):
+        """
+        :param id: Image member ID.
+        :type id: ``str``
+
+        :param id: The associated image ID.
+        :type id: ``str``
+
+        :param state: State of the NodeImageMember. If not
+                      provided, will default to UNKNOWN.
+        :type state: :class:`.NodeImageMemberState`
+
+        :param driver: Driver this image belongs to.
+        :type driver: :class:`.NodeDriver`
+
+        :param      created: A datetime object that represents when the
+                             image member was created
+        :type       created: ``datetime.datetime``
+
+        :param extra: Optional provided specific attributes associated with
+                      this image.
+        :type extra: ``dict``
+        """
+        self.id = str(id)
+        self.image_id = str(image_id)
+        self.state = state
+        self.driver = driver
+        self.created = created
+        self.extra = extra or {}
+        UuidMixin.__init__(self)
+
+    def __repr__(self):
+        return (('<NodeImageMember: id=%s, image_id=%s, '
+                 'state=%s, driver=%s  ...>')
+                % (self.id, self.image_id, self.state, self.driver.name))
+
+
 class NodeLocation(object):
     """
     A physical location where nodes can be.
@@ -559,7 +611,7 @@ class VolumeSnapshot(object):
     A base VolumeSnapshot class to derive from.
     """
     def __init__(self, id, driver, size=None, extra=None, created=None,
-                 state=None):
+                 state=None, name=None):
         """
         VolumeSnapshot constructor.
 
@@ -583,6 +635,9 @@ class VolumeSnapshot(object):
         :param      state: A string representing the state the snapshot is
                            in. See `libcloud.compute.types.StorageVolumeState`.
         :type       state: ``str``
+
+        :param      name: A string representing the name of the snapshot
+        :type       name: ``str``
         """
         self.id = id
         self.driver = driver
@@ -590,6 +645,7 @@ class VolumeSnapshot(object):
         self.extra = extra or {}
         self.created = created
         self.state = state
+        self.name = name
 
     def destroy(self):
         """
@@ -600,8 +656,8 @@ class VolumeSnapshot(object):
         return self.driver.destroy_volume_snapshot(snapshot=self)
 
     def __repr__(self):
-        return ('<VolumeSnapshot id=%s size=%s driver=%s state=%s>' %
-                (self.id, self.size, self.driver.name, self.state))
+        return ('<VolumeSnapshot "%s" id=%s size=%s driver=%s state=%s>' %
+                (self.name, self.id, self.size, self.driver.name, self.state))
 
 
 class KeyPair(object):
@@ -1341,8 +1397,11 @@ class NodeDriver(BaseDriver):
 
             running_nodes = [node for node in matching_nodes
                              if node.state == NodeState.RUNNING]
-            addresses = [filter_addresses(getattr(node, ssh_interface))
-                         for node in running_nodes]
+            addresses = []
+            for node in running_nodes:
+                node_addresses = filter_addresses(getattr(node, ssh_interface))
+                if len(node_addresses) >= 1:
+                    addresses.append(node_addresses)
 
             if len(running_nodes) == len(uuids) == len(addresses):
                 return list(zip(running_nodes, addresses))

@@ -24,15 +24,12 @@ import mimetypes
 from os.path import join as pjoin
 from collections import defaultdict
 
-try:
-    from lxml import etree as ET
-except ImportError:
-    from xml.etree import ElementTree as ET
-
+from libcloud.utils.py3 import ET
 from libcloud.compute.base import NodeDriver, Node
 from libcloud.compute.base import NodeState
 from libcloud.compute.types import Provider
 from libcloud.utils.networking import is_public_subnet
+from libcloud.utils.py3 import ensure_string
 
 try:
     import libvirt
@@ -414,7 +411,7 @@ class LibvirtNodeDriver(NodeDriver):
         Sets up the regexp for parsing out IP addresses from the 'ip neighbor'
         command and pass it along to the parser function.
 
-        :return: Dictionary from the parsing funtion
+        :return: Dictionary from the parsing function
         :rtype: ``dict``
         """
         ip_regex = re.compile('(.*?)\s+.*lladdr\s+(.*?)\s+')
@@ -428,7 +425,7 @@ class LibvirtNodeDriver(NodeDriver):
         :return: Dictionary which maps mac address to IP address.
         :rtype: ``dict``
         """
-        lines = cmd_output.split('\n')
+        lines = ensure_string(cmd_output).split('\n')
 
         arp_table = defaultdict(list)
         for line in lines:
